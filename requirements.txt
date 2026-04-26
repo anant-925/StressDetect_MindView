@@ -1,0 +1,35 @@
+# Resilience-First AI System for Cross-Platform Stress Detection
+# Requirements - Full Stack (Phases 1-4)
+
+# Core ML
+torch>=2.0.0
+transformers>=4.30.0
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+openpyxl>=3.1.0
+
+# Security & Authentication
+bcrypt>=4.0.0
+python-jose[cryptography]>=3.4.0
+cryptography>=46.0.5
+
+# API
+fastapi>=0.115.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.0.0
+
+# UI
+streamlit>=1.28.0
+plotly>=5.18.0
+
+# Utilities
+scikit-learn>=1.3.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+nltk>=3.8.0
+
+# Testing
+pytest>=7.4.0
+httpx>=0.25.0
