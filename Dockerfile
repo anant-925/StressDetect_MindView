@@ -1,5 +1,7 @@
 # ── Base image ──────────────────────────────────────────────────────────────
 # Python 3.11 slim keeps the image lean while matching the dev environment.
+RUN useradd -m -u 1000 user
+USER user
 FROM python:3.11-slim
 
 # ── System dependencies ──────────────────────────────────────────────────────
