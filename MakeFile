@@ -1,0 +1,48 @@
+# Makefile — StressDetect
+# ========================
+# Usage: make <target>
+
+.PHONY: install run dashboard train test download lint clean
+
+# ── Setup ──────────────────────────────────────────────────────────────
+install:
+	pip install -r requirements.txt
+
+download:
+	python scripts/download_model.py
+
+# ── Run ────────────────────────────────────────────────────────────────
+run:
+	uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+
+dashboard:
+	streamlit run ui/app.py
+
+# Run both together (background API + foreground Streamlit)
+dev:
+	uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload &
+	streamlit run ui/app.py
+
+# ── Training ───────────────────────────────────────────────────────────
+preprocess:
+	python scripts/data_preprocessing.py
+
+train:
+	python training/train.py
+
+retrain:
+	python training/retrain.py
+
+# ── Tests ──────────────────────────────────────────────────────────────
+test:
+	pytest tests/ -v
+
+# ── Lint ───────────────────────────────────────────────────────────────
+lint:
+	ruff check . --fix
+
+# ── Clean ──────────────────────────────────────────────────────────────
+clean:
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+	find . -name "*.pyc" -delete 2>/dev/null || true
+	rm -f stress_detection.db
