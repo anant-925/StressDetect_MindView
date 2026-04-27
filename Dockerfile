@@ -38,8 +38,8 @@ ENV STREAMLIT_SERVER_PORT=7860
 ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
 ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 ENV PYTHONUNBUFFERED=1
-ENV STRESS_DB_PATH=/app/stress_detection.db
-
+# ENV STRESS_DB_PATH=/app/stress_detection.db
+ENV STRESS_DB_PATH=/data/stress_detection.db
 # ── Expose port ──────────────────────────────────────────────────────────────
 EXPOSE 7860
 

@@ -1493,9 +1493,12 @@ def _history_page() -> None:
 
 def _settings_page() -> None:
     st.markdown('<div class="section-heading">Account</div>', unsafe_allow_html=True)
+
+    username = st.session_state.get("username", "—")  # ← fix here
+
     st.markdown(
         f'<div class="sd-card">'
-        f'<strong>Signed in as:</strong> {st.session_state.get("username", "\u2014")}<br>'
+        f'<strong>Signed in as:</strong> {username}<br>'
         f'<span style="color:{TEXT_MUTED}; font-size:0.87rem;">'
         "Your JWT session token is stored in the browser session state."
         "</span></div>",
@@ -1504,16 +1507,23 @@ def _settings_page() -> None:
 
     st.markdown('<div class="section-heading">Model info</div>', unsafe_allow_html=True)
     info = _api_get("/model/info")
+
     if info["status"] == 200:
         d = info["data"]
-        chk = "yes" if d.get("checkpoint_exists") else "no \u2014 using random weights"
+        chk = "yes" if d.get("checkpoint_exists") else "no — using random weights"
+
+        model_type = d.get("model_type", "—")
+        threshold = d.get("decision_threshold", "—")
+        vocab_size = d.get("vocab_size", 0)
+        checkpoint_path = d.get("checkpoint_path", "—")
+
         st.markdown(
             f'<div class="sd-card">'
-            f'<strong>Type:</strong> {d.get("model_type", "\u2014")}<br>'
-            f'<strong>Decision threshold:</strong> {d.get("decision_threshold", "\u2014")}<br>'
-            f'<strong>Vocab size:</strong> {d.get("vocab_size", 0):,}<br>'
+            f'<strong>Type:</strong> {model_type}<br>'
+            f'<strong>Decision threshold:</strong> {threshold}<br>'
+            f'<strong>Vocab size:</strong> {vocab_size:,}<br>'
             f'<strong>Checkpoint present:</strong> {chk}<br>'
-            f'<strong>Path:</strong> <code>{d.get("checkpoint_path", "\u2014")}</code>'
+            f'<strong>Path:</strong> <code>{checkpoint_path}</code>'
             "</div>",
             unsafe_allow_html=True,
         )

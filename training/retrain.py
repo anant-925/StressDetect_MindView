@@ -35,7 +35,7 @@ Usage
         --data       data/processed/unified_stress.csv \\
         --db         stress_detection.db \\
         --epochs     3 \\
-        --min-feedback 10
+        --min-feedback 50
 """
 
 from __future__ import annotations
@@ -132,7 +132,7 @@ def retrain(
     val_ratio: float = 0.15,
     seed: int = 42,
     device_str: str = "cuda",
-    min_feedback: int = 10,
+    min_feedback: int = 50,
     max_fpr: float = 0.30,
     min_threshold: float = 0.50,
 ) -> None:
@@ -173,6 +173,13 @@ def retrain(
         ``_find_best_threshold``).
     """
     torch.manual_seed(seed)
+
+    if output_path == checkpoint_path:
+        output_dir = "/data/checkpoints"
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = os.path.join(output_dir, f"model_{int(time.time())}.pt")
+
+    print(f"Saving checkpoint to: {output_path}")
     device = torch.device(
         device_str if torch.cuda.is_available() or device_str == "cpu" else "cpu"
     )
