@@ -429,10 +429,10 @@ class RegisterRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=8)
 
-
 class LoginRequest(BaseModel):
     username: str
     password: str
+    remember_me: bool = True
 
 
 class TokenResponse(BaseModel):
@@ -617,9 +617,15 @@ def login(req: LoginRequest) -> TokenResponse:
             detail="Invalid username or password",
         )
 
-    token = create_jwt_token({"sub": req.username})
+    expiry = timedelta(days=7) if req.remember_me else timedelta(hours=1)
+    token = create_jwt_token({"sub": req.username}, expires_delta=expiry)
     return TokenResponse(access_token=token)
 
+@app.post("/token/refresh", response_model=TokenResponse)
+def refresh_token(username: str = Depends(_get_current_user)) -> TokenResponse:
+    """Issue a fresh JWT for the authenticated user."""
+    token = create_jwt_token({"sub": username})
+    return TokenResponse(access_token=token)
 
 @app.post("/analyze", response_model=AnalyzeResponse)
 def analyze(

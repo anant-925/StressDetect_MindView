@@ -64,104 +64,116 @@ _MAX_HISTORY_ITEMS = 200
 # ---------------------------------------------------------------------------
 # Design system — colours
 # ---------------------------------------------------------------------------
-
-BG_COLOR        = "#F7F8FA"
-CARD_BG         = "#FFFFFF"
-TEXT_MAIN       = "#1A202C"
-TEXT_MUTED      = "#718096"
-ACCENT          = "#4361EE"
-ACCENT_LIGHT    = "#EEF2FF"
-LEVEL_LOW       = "#22C55E"
-LEVEL_MODERATE  = "#F59E0B"
-LEVEL_HIGH      = "#EF4444"
-LEVEL_UNCERTAIN = "#94A3B8"
-BORDER_COLOR    = "#E2E8F0"
-GAUGE_GREEN     = "#DCFCE7"
-GAUGE_AMBER     = "#FEF3C7"
-GAUGE_RED       = "#FEE2E2"
-
 # ---------------------------------------------------------------------------
-# Custom CSS
+# Design system — Warm Limestone palette
 # ---------------------------------------------------------------------------
+
+BG_COLOR        = "#F5F0EB"       # warm off-white, like unbleached linen
+CARD_BG         = "#FDFAF7"       # slightly warmer white for cards
+TEXT_MAIN       = "#2C2318"       # deep warm brown, not pure black
+TEXT_MUTED      = "#9A8C7E"       # warm taupe
+ACCENT          = "#C17A47"       # terracotta/warm amber
+ACCENT_LIGHT    = "#F5EBE0"       # pale peach tint
+LEVEL_LOW       = "#5A8F6A"       # muted sage green
+LEVEL_MODERATE  = "#C49A3C"       # warm ochre
+LEVEL_HIGH      = "#B85450"       # muted terracotta red
+LEVEL_UNCERTAIN = "#9A8C7E"       # warm taupe
+BORDER_COLOR    = "#E8DDD3"       # warm sand border
+GAUGE_GREEN     = "#E8F0E9"
+GAUGE_AMBER     = "#F5EDDB"
+GAUGE_RED       = "#F2E0DF"
+SIDEBAR_BG      = "#EDE6DC"       # warm parchment sidebar
 
 _CSS = (
     "<style>"
-    # ── Base app & sidebar ──
-    ".stApp {{ background-color: {bg}; color: {txt}; }}"
-    # Animated gradient sidebar
+    # Google Fonts import
+    "@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');"
+
+    # ── Base ──
+    ".stApp {{ background-color: {bg}; color: {txt}; font-family: 'DM Sans', sans-serif; }}"
+    "*, *::before, *::after {{ box-sizing: border-box; }}"
+
+    # ── Sidebar — warm parchment, no animation ──
     "section[data-testid=stSidebar] {{"
-    "  background: linear-gradient(160deg, #eef2ff 0%, #e0e7ff 40%, #ede9fe 100%);"
-    "  background-size: 300% 300%;"
-    "  animation: gradientShift 12s ease infinite;"
-    "  border-right:1px solid {border};"
+    "  background: {sidebar};"
+    "  border-right: 1px solid {border};"
     "}}"
-    "@keyframes gradientShift {{"
-    "  0%   {{ background-position: 0% 50%; }}"
-    "  50%  {{ background-position: 100% 50%; }}"
-    "  100% {{ background-position: 0% 50%; }}"
-    "}}"
-    # ── Hero (auth page) ──
+
+    # ── Hero block ──
     ".hero-bg {{"
-    "  background: linear-gradient(135deg, #3730a3 0%, #4f46e5 35%, #7c3aed 70%, #6d28d9 100%);"
-    "  border-radius: 16px; padding: 2.8rem 2.2rem 2rem; margin-bottom: 1.5rem;"
-    "  text-align: center; position: relative; overflow: hidden;"
+    "  background: linear-gradient(135deg, #3D2B1F 0%, #6B3F2A 50%, #8B5E3C 100%);"
+    "  border-radius: 20px; padding: 3rem 2.5rem 2.5rem;"
+    "  margin-bottom: 2rem; text-align: center; position: relative; overflow: hidden;"
     "}}"
-    ".hero-title {{ font-size:2.6rem; font-weight:900; color:#fff; margin-bottom:0.3rem; letter-spacing:-0.03em; }}"
-    ".hero-sub   {{ font-size:1rem; color:rgba(255,255,255,0.82); margin-bottom:1.4rem; }}"
-    "@keyframes floatPulse {{"
-    "  0%   {{ transform: translateY(0px) scale(1.0); opacity:0.85; }}"
-    "  50%  {{ transform: translateY(-10px) scale(1.04); opacity:1.0; }}"
-    "  100% {{ transform: translateY(0px) scale(1.0); opacity:0.85; }}"
+    ".hero-bg::before {{"
+    "  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;"
+    "  background: url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\");"
+    "  pointer-events: none;"
     "}}"
-    ".hero-svg {{ animation: floatPulse 5s ease-in-out infinite; display:inline-block; margin-bottom:0.5rem; }}"
+    ".hero-title {{ font-family: 'Playfair Display', serif; font-size: 2.8rem; font-weight: 700; color: #F5EDE0; margin-bottom: 0.4rem; letter-spacing: -0.01em; }}"
+    ".hero-sub {{ font-size: 1rem; color: rgba(245,237,224,0.72); margin-bottom: 1.6rem; font-weight: 300; letter-spacing: 0.02em; }}"
+    "@keyframes floatPulse {{ 0% {{ transform: translateY(0) scale(1.0); opacity:0.85; }} 50% {{ transform: translateY(-10px) scale(1.04); opacity:1.0; }} 100% {{ transform: translateY(0) scale(1.0); opacity:0.85; }} }}"
+    ".hero-svg {{ animation: floatPulse 6s ease-in-out infinite; display:inline-block; margin-bottom:0.8rem; }}"
+
     # ── Typography ──
-    ".page-title {{ font-size:1.75rem; font-weight:700; color:{accent}; letter-spacing:-0.02em; margin-bottom:0.1rem; }}"
-    ".page-subtitle {{ font-size:0.95rem; color:{muted}; margin-bottom:1.5rem; }}"
-    ".section-heading {{ font-size:1.05rem; font-weight:600; color:{txt}; margin:1.2rem 0 0.5rem; }}"
-    # ── Cards ──
-    ".sd-card {{ background:{card}; border:1px solid {border}; border-radius:12px; padding:1.2rem 1.4rem; box-shadow:0 1px 4px rgba(0,0,0,0.06); margin-bottom:1rem; }}"
-    ".stat-tile {{ background:{card}; border:1px solid {border}; border-radius:10px; padding:0.9rem 0.8rem; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.05); }}"
-    ".stat-value {{ font-size:1.55rem; font-weight:700; color:{accent}; line-height:1.2; }}"
-    ".stat-label {{ font-size:0.75rem; color:{muted}; text-transform:uppercase; letter-spacing:0.06em; margin-top:0.15rem; }}"
-    # ── Ambient level panels ──
-    ".panel-high {{ background:rgba(239,68,68,0.04); border:1px solid rgba(239,68,68,0.18); border-radius:12px; padding:1rem; margin-bottom:0.5rem; }}"
-    ".panel-low  {{ background:rgba(34,197,94,0.05); border:1px solid rgba(34,197,94,0.18); border-radius:12px; padding:1rem; margin-bottom:0.5rem; }}"
+    ".page-title {{ font-family: 'Playfair Display', serif; font-size: 1.9rem; font-weight: 700; color: {txt}; letter-spacing: -0.02em; margin-bottom: 0.1rem; }}"
+    ".page-subtitle {{ font-size: 0.92rem; color: {muted}; margin-bottom: 1.8rem; font-weight: 300; letter-spacing: 0.01em; }}"
+    ".section-heading {{ font-family: 'DM Sans', sans-serif; font-size: 0.72rem; font-weight: 600; color: {muted}; text-transform: uppercase; letter-spacing: 0.12em; margin: 1.4rem 0 0.7rem; }}"
+
+    # ── Cards — very subtle, warm ──
+    ".sd-card {{ background: {card}; border: 1px solid {border}; border-radius: 14px; padding: 1.3rem 1.5rem; box-shadow: 0 2px 8px rgba(60,35,18,0.05); margin-bottom: 1rem; }}"
+    ".stat-tile {{ background: {card}; border: 1px solid {border}; border-radius: 12px; padding: 1rem; text-align: center; box-shadow: 0 1px 4px rgba(60,35,18,0.04); }}"
+    ".stat-value {{ font-family: 'Playfair Display', serif; font-size: 1.65rem; font-weight: 700; color: {accent}; line-height: 1.15; }}"
+    ".stat-label {{ font-size: 0.68rem; color: {muted}; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.2rem; font-weight: 500; }}"
+
     # ── Level badge ──
-    ".level-badge {{ display:inline-block; padding:0.35rem 1.2rem; border-radius:20px; font-size:0.85rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:white; }}"
+    ".level-badge {{ display: inline-block; padding: 0.35rem 1.3rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: white; }}"
+
+    # ── Ambient panels ──
+    ".panel-high {{ background: rgba(184,84,80,0.04); border: 1px solid rgba(184,84,80,0.16); border-radius: 14px; padding: 1.1rem; margin-bottom: 0.6rem; }}"
+    ".panel-low  {{ background: rgba(90,143,106,0.05); border: 1px solid rgba(90,143,106,0.16); border-radius: 14px; padding: 1.1rem; margin-bottom: 0.6rem; }}"
+
     # ── Confidence bar ──
-    ".confidence-track {{ background:{border}; border-radius:4px; height:8px; margin:0.4rem 0; }}"
-    ".confidence-fill {{ height:8px; border-radius:4px; }}"
-    # ── Intervention items ──
-    ".iv-item {{ padding:0.55rem 0.2rem; border-bottom:1px solid {border}; line-height:1.55; }}"
-    ".iv-item:last-child {{ border-bottom:none; }}"
-    ".iv-category {{ display:inline-block; font-size:0.68rem; font-weight:600; letter-spacing:0.07em; text-transform:uppercase; background:{acl}; color:{accent}; padding:0.1rem 0.5rem; border-radius:10px; margin-left:0.4rem; }}"
+    ".confidence-track {{ background: {border}; border-radius: 6px; height: 6px; margin: 0.4rem 0; }}"
+    ".confidence-fill  {{ height: 6px; border-radius: 6px; }}"
+
+    # ── Breathing / calm zone ──
+    "@keyframes breathe {{ 0% {{ transform:scale(1.0); opacity:0.5; }} 50% {{ transform:scale(1.45); opacity:1.0; }} 100% {{ transform:scale(1.0); opacity:0.5; }} }}"
+    "@keyframes ripple  {{ 0% {{ transform:scale(1); opacity:0.5; }} 100% {{ transform:scale(2.4); opacity:0; }} }}"
+    ".breathe-circle {{ width: 80px; height: 80px; border-radius: 50%; background: {accent}; margin: 1.4rem auto; animation: breathe 8s ease-in-out infinite; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; box-shadow: 0 0 0 14px rgba(193,122,71,0.1); }}"
+    ".ripple-ring {{ position: absolute; width: 80px; height: 80px; border-radius: 50%; border: 1.5px solid rgba(193,122,71,0.3); animation: ripple 3.2s ease-out infinite; }}"
+    ".calm-zone {{ background: linear-gradient(135deg, #F5EBE0 0%, #EDE6DC 100%); border: 1px solid {border}; border-radius: 16px; padding: 1.6rem 1.4rem 1.3rem; text-align: center; position: relative; overflow: hidden; margin: 0.7rem 0; }}"
+
+    # ── Interventions ──
+    ".iv-item {{ padding: 0.65rem 0.2rem; border-bottom: 1px solid {border}; line-height: 1.6; }}"
+    ".iv-item:last-child {{ border-bottom: none; }}"
+    ".iv-category {{ display: inline-block; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; background: {acl}; color: {accent}; padding: 0.1rem 0.55rem; border-radius: 10px; margin-left: 0.5rem; }}"
+
     # ── Crisis notice ──
-    ".crisis-notice {{ background:#FFF5F5; border:1px solid #FCA5A5; border-left:4px solid {high}; border-radius:8px; padding:1.1rem 1.4rem; line-height:1.7; color:{txt}; margin:0.75rem 0; }}"
+    ".crisis-notice {{ background: #FBF0EF; border: 1px solid rgba(184,84,80,0.25); border-left: 4px solid {high}; border-radius: 10px; padding: 1.2rem 1.5rem; line-height: 1.75; color: {txt}; margin: 0.8rem 0; }}"
+
     # ── Escalation banner ──
-    ".escalation-banner {{ background:linear-gradient(90deg,#fffbeb,#fef3c7); border:1px solid #f59e0b; border-left:5px solid #d97706; border-radius:10px; padding:1rem 1.4rem; margin:0.75rem 0; line-height:1.7; }}"
-    # ── Attention heatmap ──
-    ".heatmap-word {{ display:inline-block; padding:2px 5px; margin:2px; border-radius:4px; font-size:0.92rem; }}"
-    # ── Breathing animation & calm zone ──
-    "@keyframes breathe {{ 0% {{ transform:scale(1.0); opacity:0.6; }} 50% {{ transform:scale(1.4); opacity:1.0; }} 100% {{ transform:scale(1.0); opacity:0.6; }} }}"
-    ".breathe-circle {{ width:88px; height:88px; border-radius:50%; background:{accent}; margin:1.2rem auto; animation:breathe 8s ease-in-out infinite; display:flex; align-items:center; justify-content:center; color:white; font-size:0.76rem; font-weight:600; box-shadow:0 0 0 12px rgba(67,97,238,0.12); }}"
-    "@keyframes ripple {{ 0% {{ transform:scale(1); opacity:0.6; }} 100% {{ transform:scale(2.2); opacity:0; }} }}"
-    ".ripple-ring {{ position:absolute; width:88px; height:88px; border-radius:50%; border:2px solid rgba(67,97,238,0.35); animation:ripple 3s ease-out infinite; }}"
-    ".calm-zone {{ background:linear-gradient(135deg,#eef2ff 0%,#ede9fe 100%); border:1px solid #c7d2fe; border-radius:14px; padding:1.5rem 1.2rem 1.2rem; text-align:center; position:relative; overflow:hidden; margin:0.5rem 0; }}"
-    # ── Well-being action bar ──
-    ".action-bar {{ display:flex; gap:0.6rem; flex-wrap:wrap; margin:0.8rem 0 0.4rem; }}"
-    ".action-btn {{ display:inline-flex; align-items:center; gap:0.35rem; padding:0.45rem 0.85rem; border-radius:20px; background:#fff; border:1px solid {border}; font-size:0.82rem; color:{txt}; text-decoration:none; font-weight:500; box-shadow:0 1px 3px rgba(0,0,0,0.05); transition:background 0.15s; }}"
-    ".action-btn:hover {{ background:{acl}; }}"
+    ".escalation-banner {{ background: linear-gradient(90deg, #FDF6EC, #FAF0E0); border: 1px solid #E8C97A; border-left: 5px solid {accent}; border-radius: 12px; padding: 1.1rem 1.5rem; margin: 0.8rem 0; line-height: 1.75; }}"
+
+    # ── Action bar ──
+    ".action-btn {{ display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.45rem 0.9rem; border-radius: 20px; background: {card}; border: 1px solid {border}; font-size: 0.8rem; color: {txt}; text-decoration: none; font-weight: 500; box-shadow: 0 1px 3px rgba(60,35,18,0.05); }}"
+
     # ── Streak badge ──
-    ".streak-badge {{ display:inline-flex; align-items:center; gap:0.3rem; background:#fff7ed; border:1px solid #fed7aa; border-radius:20px; padding:0.25rem 0.7rem; font-size:0.8rem; font-weight:600; color:#ea580c; }}"
-    # ── Progress step ──
-    ".step-card {{ background:{card}; border:1px solid {border}; border-radius:12px; padding:1rem 1.3rem; border-left:4px solid {accent}; margin:0.4rem 0; }}"
-    ".step-num {{ font-size:0.7rem; font-weight:700; color:{accent}; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.2rem; }}"
+    ".streak-badge {{ display: inline-flex; align-items: center; gap: 0.3rem; background: #FDF0E6; border: 1px solid #F0D4B5; border-radius: 20px; padding: 0.25rem 0.75rem; font-size: 0.78rem; font-weight: 600; color: {accent}; }}"
+
+    # ── Step card ──
+    ".step-card {{ background: {card}; border: 1px solid {border}; border-radius: 14px; padding: 1.1rem 1.4rem; border-left: 3px solid {accent}; margin: 0.5rem 0; }}"
+    ".step-num {{ font-size: 0.65rem; font-weight: 700; color: {accent}; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.25rem; }}"
+
+    # ── Sidebar nav overrides ──
+    ".stRadio > div {{ gap: 0.15rem; }}"
+    ".stRadio label {{ border-radius: 10px; padding: 0.45rem 0.75rem; font-size: 0.88rem; }}"
     "</style>"
 ).format(
     bg=BG_COLOR, card=CARD_BG, txt=TEXT_MAIN, muted=TEXT_MUTED,
     accent=ACCENT, acl=ACCENT_LIGHT, border=BORDER_COLOR, high=LEVEL_HIGH,
+    sidebar=SIDEBAR_BG,
 )
-
 # ---------------------------------------------------------------------------
 # Level metadata
 # ---------------------------------------------------------------------------
@@ -1010,6 +1022,7 @@ def _auth_page() -> None:
             # Floating SVG illustration: abstract meditating figure
             '<div class="hero-svg">'
             '<svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">'
+            
             # Body glow
             '<circle cx="55" cy="55" r="48" fill="rgba(255,255,255,0.1)"/>'
             # Seated figure
@@ -1027,8 +1040,8 @@ def _auth_page() -> None:
             '<circle cx="55" cy="55" r="30" stroke="rgba(255,255,255,0.15)" stroke-width="1" fill="none"/>'
             '</svg>'
             '</div>'
-            '<div class="hero-title">🧠 StressDetect</div>'
-            '<div class="hero-sub">A quiet, science-backed check-in with yourself.</div>'
+            '<div class="hero-title">StressDetect</div>'
+            '<div class="hero-sub">A quiet space to check in with yourself.</div>'
             '</div>',
             unsafe_allow_html=True,
         )
@@ -1052,6 +1065,7 @@ def _auth_page() -> None:
                         st.session_state.username = username
                         st.session_state.history  = _fetch_history(token)
                         st.session_state.page     = "Dashboard"
+                        st.query_params["t"] = token
                         st.rerun()
                     else:
                         st.error(result["data"].get("detail", "Could not sign in."))
@@ -1561,6 +1575,7 @@ def _settings_page() -> None:
 
     st.markdown("")
     if st.button("Sign out", type="secondary"):
+        st.query_params.clear()
         for key in [
             "token", "username", "history", "current_analysis",
             "_fb_message", "_fb_status", "feedback_done", "page",
@@ -1577,9 +1592,8 @@ def _settings_page() -> None:
 def _sidebar() -> str:
     with st.sidebar:
         st.markdown(
-            f'<div style="font-size:1.25rem; font-weight:700; color:{ACCENT}; '
-            "padding:0.5rem 0 0.2rem;"
-            ">\U0001F9E0 StressDetect</div>",
+            f'<div style="font-family: Playfair Display, serif; font-size:1.3rem; font-weight:700; '
+            f'color:{TEXT_MAIN}; padding:0.5rem 0 0.2rem;">StressDetect</div>',
             unsafe_allow_html=True,
         )
         st.markdown(
@@ -1645,12 +1659,43 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
     st.markdown(_CSS, unsafe_allow_html=True)
+    def _maybe_refresh_token() -> None:
+        token = st.session_state.get("token")
+        if not token:
+            return
+        try:
+            from security.auth import decode_jwt_token
+            payload = decode_jwt_token(token)
+            exp = payload.get("exp", 0)
+            # Refresh if less than 1 day left
+            if exp - time.time() < 86400:
+                result = _api_post("/token/refresh", {}, token=token)
+                if result["status"] == 200:
+                    new_token = result["data"]["access_token"]
+                    st.session_state.token = new_token
+                    st.query_params["t"] = new_token
+        except Exception:
+            pass
+    if "token" not in st.session_state or not st.session_state.get("token"):
+        saved_token = st.query_params.get("t")
+        if saved_token:
+            # Validate it's still good by calling /history
+            result = _api_get("/history?limit=1", token=saved_token)
+            if result["status"] == 200:
+                # Decode username from JWT payload
+                from security.auth import decode_jwt_token
+                try:
+                    payload = decode_jwt_token(saved_token)
+                    st.session_state.token = saved_token
+                    st.session_state.username = payload.get("sub", "")
+                    st.session_state.history = _fetch_history(saved_token)
+                    st.session_state.page = "Dashboard"
+                except Exception:
+                    st.query_params.clear()
 
     if "token" not in st.session_state or not st.session_state.token:
         _auth_page()
         return
-
-    page = _sidebar()
 
     if page == "Dashboard":
         st.markdown('<p class="page-title">Dashboard</p>', unsafe_allow_html=True)
