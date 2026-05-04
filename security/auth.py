@@ -39,8 +39,7 @@ JWT_SECRET_KEY: str = os.environ.get(
     "dev-secret-key-change-in-production-f8a3b2c1d4e5",
 )
 JWT_ALGORITHM: str = "HS256"
-JWT_EXPIRATION_MINUTES: int = 60
-
+JWT_EXPIRATION_MINUTES: int = int(os.environ.get("JWT_EXPIRATION_MINUTES", "10080"))  # 7 days default
 # Fernet key for AES-256 encryption
 _fernet_key: str = os.environ.get("FERNET_KEY", "")
 if not _fernet_key:
