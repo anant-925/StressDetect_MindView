@@ -62,118 +62,289 @@ API_URL = os.environ.get("API_URL", "http://localhost:8000")
 _MAX_HISTORY_ITEMS = 200
 
 # ---------------------------------------------------------------------------
-# Design system — colours
-# ---------------------------------------------------------------------------
-# ---------------------------------------------------------------------------
 # Design system — Warm Limestone palette
 # ---------------------------------------------------------------------------
 
-BG_COLOR        = "#F5F0EB"       # warm off-white, like unbleached linen
-CARD_BG         = "#FDFAF7"       # slightly warmer white for cards
-TEXT_MAIN       = "#2C2318"       # deep warm brown, not pure black
-TEXT_MUTED      = "#9A8C7E"       # warm taupe
-ACCENT          = "#C17A47"       # terracotta/warm amber
-ACCENT_LIGHT    = "#F5EBE0"       # pale peach tint
-LEVEL_LOW       = "#5A8F6A"       # muted sage green
-LEVEL_MODERATE  = "#C49A3C"       # warm ochre
-LEVEL_HIGH      = "#B85450"       # muted terracotta red
-LEVEL_UNCERTAIN = "#9A8C7E"       # warm taupe
-BORDER_COLOR    = "#E8DDD3"       # warm sand border
+BG_COLOR        = "#F5F0EB"   # warm off-white linen
+CARD_BG         = "#FDFAF7"   # warm white for cards
+TEXT_MAIN       = "#2C2318"   # deep warm brown
+TEXT_MUTED      = "#8A7A6E"   # warm taupe (darkened for readability)
+ACCENT          = "#C17A47"   # terracotta / warm amber
+ACCENT_LIGHT    = "#F5EBE0"   # pale peach tint
+LEVEL_LOW       = "#3D7A52"   # muted sage green (darkened for contrast)
+LEVEL_MODERATE  = "#B8860B"   # dark goldenrod (readable on light bg)
+LEVEL_HIGH      = "#A03030"   # muted deep red (readable)
+LEVEL_UNCERTAIN = "#7A6E65"   # warm taupe-gray
+BORDER_COLOR    = "#E2D8CE"   # warm sand border
+SIDEBAR_BG      = "#EDE6DC"   # warm parchment
 GAUGE_GREEN     = "#E8F0E9"
 GAUGE_AMBER     = "#F5EDDB"
 GAUGE_RED       = "#F2E0DF"
-SIDEBAR_BG      = "#EDE6DC"       # warm parchment sidebar
+
+# ---------------------------------------------------------------------------
+# Custom CSS
+# ---------------------------------------------------------------------------
 
 _CSS = (
     "<style>"
-    # Google Fonts import
-    "@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');"
+    # ── Google Fonts ──
+    "@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');"
 
-    # ── Base ──
+    # ── Base app ──
     ".stApp {{ background-color: {bg}; color: {txt}; font-family: 'DM Sans', sans-serif; }}"
-    "*, *::before, *::after {{ box-sizing: border-box; }}"
 
     # ── Sidebar — warm parchment, no animation ──
     "section[data-testid=stSidebar] {{"
-    "  background: {sidebar};"
+    "  background: {sidebar} !important;"
     "  border-right: 1px solid {border};"
     "}}"
 
-    # ── Hero block ──
-    ".hero-bg {{"
-    "  background: linear-gradient(135deg, #3D2B1F 0%, #6B3F2A 50%, #8B5E3C 100%);"
-    "  border-radius: 20px; padding: 3rem 2.5rem 2.5rem;"
-    "  margin-bottom: 2rem; text-align: center; position: relative; overflow: hidden;"
+    # ── Fix Streamlit's default button readability ──
+    # Primary buttons — solid terracotta, white text
+    ".stButton > button[kind='primary'], .stButton > button[data-testid='baseButton-primary'] {{"
+    "  background-color: {accent} !important;"
+    "  color: #FFFFFF !important;"
+    "  border: none !important;"
+    "  border-radius: 10px !important;"
+    "  font-family: 'DM Sans', sans-serif !important;"
+    "  font-weight: 500 !important;"
+    "  font-size: 0.9rem !important;"
+    "  padding: 0.55rem 1.4rem !important;"
+    "  letter-spacing: 0.02em !important;"
     "}}"
-    ".hero-bg::before {{"
-    "  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;"
-    "  background: url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\");"
-    "  pointer-events: none;"
+    ".stButton > button[kind='primary']:hover, .stButton > button[data-testid='baseButton-primary']:hover {{"
+    "  background-color: #A86035 !important;"
+    "  color: #FFFFFF !important;"
     "}}"
-    ".hero-title {{ font-family: 'Playfair Display', serif; font-size: 2.8rem; font-weight: 700; color: #F5EDE0; margin-bottom: 0.4rem; letter-spacing: -0.01em; }}"
-    ".hero-sub {{ font-size: 1rem; color: rgba(245,237,224,0.72); margin-bottom: 1.6rem; font-weight: 300; letter-spacing: 0.02em; }}"
-    "@keyframes floatPulse {{ 0% {{ transform: translateY(0) scale(1.0); opacity:0.85; }} 50% {{ transform: translateY(-10px) scale(1.04); opacity:1.0; }} 100% {{ transform: translateY(0) scale(1.0); opacity:0.85; }} }}"
-    ".hero-svg {{ animation: floatPulse 6s ease-in-out infinite; display:inline-block; margin-bottom:0.8rem; }}"
+    # Secondary / default buttons — warm outline style
+    ".stButton > button[kind='secondary'], .stButton > button[data-testid='baseButton-secondary'],"
+    ".stButton > button:not([kind]) {{"
+    "  background-color: {card} !important;"
+    "  color: {txt} !important;"
+    "  border: 1.5px solid {border} !important;"
+    "  border-radius: 10px !important;"
+    "  font-family: 'DM Sans', sans-serif !important;"
+    "  font-weight: 500 !important;"
+    "  font-size: 0.88rem !important;"
+    "}}"
+    ".stButton > button[kind='secondary']:hover, .stButton > button:not([kind]):hover {{"
+    "  border-color: {accent} !important;"
+    "  color: {accent} !important;"
+    "  background-color: {acl} !important;"
+    "}}"
+    # Form submit buttons (full-width inside st.form)
+    ".stFormSubmitButton > button {{"
+    "  background-color: {accent} !important;"
+    "  color: #FFFFFF !important;"
+    "  border: none !important;"
+    "  border-radius: 10px !important;"
+    "  font-family: 'DM Sans', sans-serif !important;"
+    "  font-weight: 500 !important;"
+    "  font-size: 0.9rem !important;"
+    "  width: 100% !important;"
+    "}}"
+    ".stFormSubmitButton > button:hover {{"
+    "  background-color: #A86035 !important;"
+    "  color: #FFFFFF !important;"
+    "}}"
+    # Download button
+    ".stDownloadButton > button {{"
+    "  background-color: {card} !important;"
+    "  color: {txt} !important;"
+    "  border: 1.5px solid {border} !important;"
+    "  border-radius: 10px !important;"
+    "  font-weight: 500 !important;"
+    "}}"
+    ".stDownloadButton > button:hover {{"
+    "  border-color: {accent} !important;"
+    "  color: {accent} !important;"
+    "}}"
+
+    # ── Fix text inputs ──
+    ".stTextInput > div > div > input, .stTextArea > div > div > textarea {{"
+    "  background-color: {card} !important;"
+    "  color: {txt} !important;"
+    "  border: 1.5px solid {border} !important;"
+    "  border-radius: 10px !important;"
+    "  font-family: 'DM Sans', sans-serif !important;"
+    "  font-size: 0.92rem !important;"
+    "}}"
+    ".stTextInput > div > div > input:focus, .stTextArea > div > div > textarea:focus {{"
+    "  border-color: {accent} !important;"
+    "  box-shadow: 0 0 0 3px rgba(193,122,71,0.12) !important;"
+    "}}"
+    ".stTextInput label, .stTextArea label {{"
+    "  color: {txt} !important;"
+    "  font-weight: 500 !important;"
+    "  font-size: 0.85rem !important;"
+    "}}"
+
+    # ── Fix Streamlit tabs ──
+    ".stTabs [data-baseweb='tab-list'] {{"
+    "  background-color: transparent !important;"
+    "  border-bottom: 1.5px solid {border} !important;"
+    "  gap: 0 !important;"
+    "}}"
+    ".stTabs [data-baseweb='tab'] {{"
+    "  color: {muted} !important;"
+    "  font-family: 'DM Sans', sans-serif !important;"
+    "  font-size: 0.88rem !important;"
+    "  font-weight: 400 !important;"
+    "  background: transparent !important;"
+    "  border-bottom: 2px solid transparent !important;"
+    "  padding: 0.5rem 1.1rem 0.6rem !important;"
+    "}}"
+    ".stTabs [aria-selected='true'] {{"
+    "  color: {accent} !important;"
+    "  border-bottom-color: {accent} !important;"
+    "  font-weight: 500 !important;"
+    "}}"
+
+    # ── Fix radio buttons in sidebar ──
+    ".stRadio label {{"
+    "  color: {txt} !important;"
+    "  font-family: 'DM Sans', sans-serif !important;"
+    "  font-size: 0.9rem !important;"
+    "}}"
+
+    # ── Streamlit info/warning/error boxes ──
+    ".stAlert {{"
+    "  border-radius: 10px !important;"
+    "  font-family: 'DM Sans', sans-serif !important;"
+    "}}"
+
+    # ── Auth page two-column layout ──
+    ".auth-right-panel {{"
+    "  background: #2C1F16;"
+    "  border-radius: 16px;"
+    "  padding: 2.5rem 1.8rem;"
+    "  min-height: 440px;"
+    "  display: flex;"
+    "  flex-direction: column;"
+    "  align-items: center;"
+    "  justify-content: center;"
+    "  position: relative;"
+    "  overflow: hidden;"
+    "}}"
+    ".rp-quote {{"
+    "  font-family: 'Playfair Display', serif;"
+    "  font-size: 1rem;"
+    "  font-style: italic;"
+    "  color: rgba(245,235,220,0.88);"
+    "  text-align: center;"
+    "  line-height: 1.8;"
+    "  position: relative; z-index: 2;"
+    "}}"
+    ".rp-author {{"
+    "  font-size: 0.68rem;"
+    "  letter-spacing: 0.14em;"
+    "  text-transform: uppercase;"
+    "  color: rgba(193,122,71,0.85);"
+    "  margin-top: 0.8rem;"
+    "  text-align: center;"
+    "  position: relative; z-index: 2;"
+    "}}"
+    ".rp-divider {{"
+    "  width: 32px; height: 1px;"
+    "  background: rgba(193,122,71,0.5);"
+    "  margin: 0.9rem auto;"
+    "  position: relative; z-index: 2;"
+    "}}"
+    ".rp-feature {{"
+    "  display: flex; align-items: flex-start; gap: 0.75rem;"
+    "  padding: 0 0.5rem; margin-top: 0.7rem;"
+    "  position: relative; z-index: 2;"
+    "}}"
+    ".rp-dot {{"
+    "  width: 5px; height: 5px; border-radius: 50%;"
+    "  background: {accent}; flex-shrink: 0; margin-top: 0.42rem;"
+    "}}"
+    ".rp-feat-text {{"
+    "  font-size: 0.73rem;"
+    "  color: rgba(245,235,220,0.62);"
+    "  line-height: 1.6;"
+    "}}"
 
     # ── Typography ──
-    ".page-title {{ font-family: 'Playfair Display', serif; font-size: 1.9rem; font-weight: 700; color: {txt}; letter-spacing: -0.02em; margin-bottom: 0.1rem; }}"
-    ".page-subtitle {{ font-size: 0.92rem; color: {muted}; margin-bottom: 1.8rem; font-weight: 300; letter-spacing: 0.01em; }}"
-    ".section-heading {{ font-family: 'DM Sans', sans-serif; font-size: 0.72rem; font-weight: 600; color: {muted}; text-transform: uppercase; letter-spacing: 0.12em; margin: 1.4rem 0 0.7rem; }}"
+    ".page-title {{ font-family: 'Playfair Display', serif; font-size: 1.85rem; font-weight: 700; color: {txt}; letter-spacing: -0.01em; margin-bottom: 0.1rem; }}"
+    ".page-subtitle {{ font-size: 0.9rem; color: {muted}; margin-bottom: 1.8rem; font-weight: 300; letter-spacing: 0.01em; }}"
+    ".section-heading {{ font-size: 0.7rem; font-weight: 600; color: {muted}; text-transform: uppercase; letter-spacing: 0.13em; margin: 1.4rem 0 0.6rem; }}"
 
-    # ── Cards — very subtle, warm ──
-    ".sd-card {{ background: {card}; border: 1px solid {border}; border-radius: 14px; padding: 1.3rem 1.5rem; box-shadow: 0 2px 8px rgba(60,35,18,0.05); margin-bottom: 1rem; }}"
-    ".stat-tile {{ background: {card}; border: 1px solid {border}; border-radius: 12px; padding: 1rem; text-align: center; box-shadow: 0 1px 4px rgba(60,35,18,0.04); }}"
-    ".stat-value {{ font-family: 'Playfair Display', serif; font-size: 1.65rem; font-weight: 700; color: {accent}; line-height: 1.15; }}"
-    ".stat-label {{ font-size: 0.68rem; color: {muted}; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.2rem; font-weight: 500; }}"
+    # ── Cards ──
+    ".sd-card {{ background:{card}; border:1px solid {border}; border-radius:14px; padding:1.3rem 1.5rem; box-shadow:0 2px 8px rgba(60,35,18,0.05); margin-bottom:1rem; color:{txt}; }}"
+    ".stat-tile {{ background:{card}; border:1px solid {border}; border-radius:12px; padding:1rem 0.9rem; text-align:center; box-shadow:0 1px 4px rgba(60,35,18,0.04); }}"
+    ".stat-value {{ font-family:'Playfair Display',serif; font-size:1.65rem; font-weight:700; color:{accent}; line-height:1.15; }}"
+    ".stat-label {{ font-size:0.68rem; color:{muted}; text-transform:uppercase; letter-spacing:0.1em; margin-top:0.2rem; font-weight:500; }}"
+
+    # ── Welcome / empty state card ──
+    ".welcome-card {{"
+    "  background: linear-gradient(135deg, #EDE6DC 0%, #E5DAD0 100%);"
+    "  border: 1px solid {border}; border-radius: 16px;"
+    "  padding: 2rem 2rem 1.8rem; margin: 0.5rem 0 1.5rem; text-align: center;"
+    "}}"
+    ".welcome-title {{ font-family:'Playfair Display',serif; font-size:1.3rem; color:{txt}; font-weight:700; margin-bottom:0.4rem; }}"
+    ".welcome-sub {{ font-size:0.88rem; color:{muted}; line-height:1.7; max-width:480px; margin:0 auto; }}"
+
+    # ── Ambient level panels ──
+    ".panel-high {{ background:rgba(160,48,48,0.04); border:1px solid rgba(160,48,48,0.16); border-radius:14px; padding:1.1rem; margin-bottom:0.6rem; }}"
+    ".panel-low  {{ background:rgba(61,122,82,0.05); border:1px solid rgba(61,122,82,0.16); border-radius:14px; padding:1.1rem; margin-bottom:0.6rem; }}"
 
     # ── Level badge ──
-    ".level-badge {{ display: inline-block; padding: 0.35rem 1.3rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: white; }}"
-
-    # ── Ambient panels ──
-    ".panel-high {{ background: rgba(184,84,80,0.04); border: 1px solid rgba(184,84,80,0.16); border-radius: 14px; padding: 1.1rem; margin-bottom: 0.6rem; }}"
-    ".panel-low  {{ background: rgba(90,143,106,0.05); border: 1px solid rgba(90,143,106,0.16); border-radius: 14px; padding: 1.1rem; margin-bottom: 0.6rem; }}"
+    ".level-badge {{ display:inline-block; padding:0.35rem 1.3rem; border-radius:20px; font-size:0.78rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:white; }}"
 
     # ── Confidence bar ──
-    ".confidence-track {{ background: {border}; border-radius: 6px; height: 6px; margin: 0.4rem 0; }}"
-    ".confidence-fill  {{ height: 6px; border-radius: 6px; }}"
+    ".confidence-track {{ background:{border}; border-radius:6px; height:6px; margin:0.4rem 0; }}"
+    ".confidence-fill {{ height:6px; border-radius:6px; }}"
 
-    # ── Breathing / calm zone ──
-    "@keyframes breathe {{ 0% {{ transform:scale(1.0); opacity:0.5; }} 50% {{ transform:scale(1.45); opacity:1.0; }} 100% {{ transform:scale(1.0); opacity:0.5; }} }}"
-    "@keyframes ripple  {{ 0% {{ transform:scale(1); opacity:0.5; }} 100% {{ transform:scale(2.4); opacity:0; }} }}"
-    ".breathe-circle {{ width: 80px; height: 80px; border-radius: 50%; background: {accent}; margin: 1.4rem auto; animation: breathe 8s ease-in-out infinite; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; box-shadow: 0 0 0 14px rgba(193,122,71,0.1); }}"
-    ".ripple-ring {{ position: absolute; width: 80px; height: 80px; border-radius: 50%; border: 1.5px solid rgba(193,122,71,0.3); animation: ripple 3.2s ease-out infinite; }}"
-    ".calm-zone {{ background: linear-gradient(135deg, #F5EBE0 0%, #EDE6DC 100%); border: 1px solid {border}; border-radius: 16px; padding: 1.6rem 1.4rem 1.3rem; text-align: center; position: relative; overflow: hidden; margin: 0.7rem 0; }}"
-
-    # ── Interventions ──
-    ".iv-item {{ padding: 0.65rem 0.2rem; border-bottom: 1px solid {border}; line-height: 1.6; }}"
-    ".iv-item:last-child {{ border-bottom: none; }}"
-    ".iv-category {{ display: inline-block; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; background: {acl}; color: {accent}; padding: 0.1rem 0.55rem; border-radius: 10px; margin-left: 0.5rem; }}"
+    # ── Intervention items ──
+    ".iv-item {{ padding:0.65rem 0.2rem; border-bottom:1px solid {border}; line-height:1.6; color:{txt}; }}"
+    ".iv-item:last-child {{ border-bottom:none; }}"
+    ".iv-category {{ display:inline-block; font-size:0.65rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; background:{acl}; color:{accent}; padding:0.1rem 0.55rem; border-radius:10px; margin-left:0.5rem; }}"
 
     # ── Crisis notice ──
-    ".crisis-notice {{ background: #FBF0EF; border: 1px solid rgba(184,84,80,0.25); border-left: 4px solid {high}; border-radius: 10px; padding: 1.2rem 1.5rem; line-height: 1.75; color: {txt}; margin: 0.8rem 0; }}"
+    ".crisis-notice {{ background:#FBF0EF; border:1px solid rgba(160,48,48,0.25); border-left:4px solid {high}; border-radius:10px; padding:1.2rem 1.5rem; line-height:1.75; color:{txt}; margin:0.8rem 0; }}"
 
     # ── Escalation banner ──
-    ".escalation-banner {{ background: linear-gradient(90deg, #FDF6EC, #FAF0E0); border: 1px solid #E8C97A; border-left: 5px solid {accent}; border-radius: 12px; padding: 1.1rem 1.5rem; margin: 0.8rem 0; line-height: 1.75; }}"
+    ".escalation-banner {{ background:linear-gradient(90deg,#FDF6EC,#FAF0E0); border:1px solid #D4A84B; border-left:5px solid {accent}; border-radius:12px; padding:1.1rem 1.5rem; margin:0.8rem 0; line-height:1.75; color:{txt}; }}"
 
-    # ── Action bar ──
-    ".action-btn {{ display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.45rem 0.9rem; border-radius: 20px; background: {card}; border: 1px solid {border}; font-size: 0.8rem; color: {txt}; text-decoration: none; font-weight: 500; box-shadow: 0 1px 3px rgba(60,35,18,0.05); }}"
+    # ── Attention heatmap ──
+    ".heatmap-word {{ display:inline-block; padding:2px 5px; margin:2px; border-radius:4px; font-size:0.92rem; }}"
+
+    # ── Breathing animation & calm zone ──
+    "@keyframes breathe {{ 0% {{ transform:scale(1.0); opacity:0.5; }} 50% {{ transform:scale(1.45); opacity:1.0; }} 100% {{ transform:scale(1.0); opacity:0.5; }} }}"
+    "@keyframes ripple  {{ 0% {{ transform:scale(1); opacity:0.5; }} 100% {{ transform:scale(2.4); opacity:0; }} }}"
+    ".breathe-circle {{ width:80px; height:80px; border-radius:50%; background:{accent}; margin:1.4rem auto; animation:breathe 8s ease-in-out infinite; display:flex; align-items:center; justify-content:center; color:white; font-size:0.72rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; box-shadow:0 0 0 14px rgba(193,122,71,0.1); }}"
+    ".ripple-ring {{ position:absolute; width:80px; height:80px; border-radius:50%; border:1.5px solid rgba(193,122,71,0.3); animation:ripple 3.2s ease-out infinite; }}"
+    ".calm-zone {{ background:linear-gradient(135deg,#F5EBE0 0%,#EDE6DC 100%); border:1px solid {border}; border-radius:16px; padding:1.6rem 1.4rem 1.3rem; text-align:center; position:relative; overflow:hidden; margin:0.7rem 0; }}"
+
+    # ── Well-being action bar ──
+    ".action-bar {{ display:flex; gap:0.6rem; flex-wrap:wrap; margin:0.8rem 0 0.4rem; }}"
+    ".action-btn {{ display:inline-flex; align-items:center; gap:0.35rem; padding:0.45rem 0.9rem; border-radius:20px; background:{card}; border:1px solid {border}; font-size:0.8rem; color:{txt}; text-decoration:none; font-weight:500; box-shadow:0 1px 3px rgba(60,35,18,0.05); }}"
+    ".action-btn:hover {{ background:{acl}; border-color:{accent}; }}"
 
     # ── Streak badge ──
-    ".streak-badge {{ display: inline-flex; align-items: center; gap: 0.3rem; background: #FDF0E6; border: 1px solid #F0D4B5; border-radius: 20px; padding: 0.25rem 0.75rem; font-size: 0.78rem; font-weight: 600; color: {accent}; }}"
+    ".streak-badge {{ display:inline-flex; align-items:center; gap:0.3rem; background:#FDF0E6; border:1px solid #F0D4B5; border-radius:20px; padding:0.25rem 0.75rem; font-size:0.78rem; font-weight:600; color:{accent}; }}"
 
-    # ── Step card ──
-    ".step-card {{ background: {card}; border: 1px solid {border}; border-radius: 14px; padding: 1.1rem 1.4rem; border-left: 3px solid {accent}; margin: 0.5rem 0; }}"
-    ".step-num {{ font-size: 0.65rem; font-weight: 700; color: {accent}; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.25rem; }}"
+    # ── Progress step ──
+    ".step-card {{ background:{card}; border:1px solid {border}; border-radius:14px; padding:1.1rem 1.4rem; border-left:3px solid {accent}; margin:0.5rem 0; color:{txt}; }}"
+    ".step-num {{ font-size:0.65rem; font-weight:700; color:{accent}; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.25rem; }}"
 
-    # ── Sidebar nav overrides ──
-    ".stRadio > div {{ gap: 0.15rem; }}"
-    ".stRadio label {{ border-radius: 10px; padding: 0.45rem 0.75rem; font-size: 0.88rem; }}"
+    # ── History unlock progress bar ──
+    ".unlock-card {{"
+    "  background:{card}; border:1px solid {border}; border-radius:12px;"
+    "  padding:1rem 1.3rem; margin:1rem 0;"
+    "}}"
+    ".unlock-bar-track {{ background:{border}; border-radius:6px; height:6px; margin:0.5rem 0 0.3rem; }}"
+    ".unlock-bar-fill {{ height:6px; border-radius:6px; background:{accent}; }}"
+    ".unlock-label {{ font-size:0.75rem; color:{muted}; }}"
+
     "</style>"
 ).format(
     bg=BG_COLOR, card=CARD_BG, txt=TEXT_MAIN, muted=TEXT_MUTED,
     accent=ACCENT, acl=ACCENT_LIGHT, border=BORDER_COLOR, high=LEVEL_HIGH,
     sidebar=SIDEBAR_BG,
 )
+
 # ---------------------------------------------------------------------------
 # Level metadata
 # ---------------------------------------------------------------------------
@@ -1014,37 +1185,86 @@ def _compute_stats(history: list[dict]) -> dict:
 
 
 def _auth_page() -> None:
-    col, _ = st.columns([1, 0.3])
-    with col:
-        # Hero background with animated SVG meditation illustration
+    col_form, col_visual = st.columns([1.1, 0.9])
+
+    # ── Right panel: visual / brand ──
+    with col_visual:
         st.markdown(
-            '<div class="hero-bg">'
-            # Floating SVG illustration: abstract meditating figure
-            '<div class="hero-svg">'
-            '<svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">'
-            
-            # Body glow
-            '<circle cx="55" cy="55" r="48" fill="rgba(255,255,255,0.1)"/>'
-            # Seated figure
-            '<ellipse cx="55" cy="82" rx="26" ry="8" fill="rgba(255,255,255,0.25)"/>'
-            '<path d="M35 75 Q40 65 55 63 Q70 65 75 75 Q65 80 55 80 Q45 80 35 75Z" fill="rgba(255,255,255,0.65)"/>'
-            # Torso
-            '<rect x="48" y="48" width="14" height="20" rx="7" fill="rgba(255,255,255,0.75)"/>'
-            # Head
-            '<circle cx="55" cy="42" r="9" fill="rgba(255,255,255,0.85)"/>'
-            # Arms
-            '<path d="M48 57 Q38 62 36 70" stroke="rgba(255,255,255,0.7)" stroke-width="4" stroke-linecap="round" fill="none"/>'
-            '<path d="M62 57 Q72 62 74 70" stroke="rgba(255,255,255,0.7)" stroke-width="4" stroke-linecap="round" fill="none"/>'
-            # Aura rings
-            '<circle cx="55" cy="55" r="38" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" fill="none"/>'
-            '<circle cx="55" cy="55" r="30" stroke="rgba(255,255,255,0.15)" stroke-width="1" fill="none"/>'
+            '<div class="auth-right-panel">'
+            # Animated SVG background: breathing rings + floating words
+            '<svg style="position:absolute;inset:0;width:100%;height:100%;" '
+            'viewBox="0 0 400 520" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">'
+            '<circle cx="320" cy="80" r="140" fill="rgba(193,122,71,0.07)"/>'
+            '<circle cx="60" cy="430" r="110" fill="rgba(193,122,71,0.05)"/>'
+            '<circle cx="200" cy="260" r="200" fill="rgba(255,255,255,0.015)"/>'
+            # grid lines
+            '<line x1="0" y1="130" x2="400" y2="130" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>'
+            '<line x1="0" y1="260" x2="400" y2="260" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>'
+            '<line x1="0" y1="390" x2="400" y2="390" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>'
+            '<line x1="100" y1="0" x2="100" y2="520" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>'
+            '<line x1="200" y1="0" x2="200" y2="520" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>'
+            '<line x1="300" y1="0" x2="300" y2="520" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>'
+            # breathing rings (animated)
+            '<circle cx="200" cy="195" r="56" fill="none" stroke="rgba(193,122,71,0.18)" stroke-width="1">'
+            '<animate attributeName="r" values="56;70;56" dur="8s" repeatCount="indefinite"/>'
+            '<animate attributeName="opacity" values="0.5;1;0.5" dur="8s" repeatCount="indefinite"/>'
+            '</circle>'
+            '<circle cx="200" cy="195" r="40" fill="none" stroke="rgba(193,122,71,0.28)" stroke-width="0.5">'
+            '<animate attributeName="r" values="40;54;40" dur="8s" repeatCount="indefinite"/>'
+            '</circle>'
+            '<circle cx="200" cy="195" r="24" fill="rgba(193,122,71,0.14)">'
+            '<animate attributeName="r" values="24;32;24" dur="8s" repeatCount="indefinite"/>'
+            '</circle>'
+            # floating words
+            '<text x="52" y="94" font-family="Georgia,serif" font-size="11" fill="rgba(245,235,220,0.22)" font-style="italic">calm</text>'
+            '<text x="288" y="148" font-family="Georgia,serif" font-size="10" fill="rgba(245,235,220,0.17)" font-style="italic">present</text>'
+            '<text x="28" y="310" font-family="Georgia,serif" font-size="10" fill="rgba(245,235,220,0.19)" font-style="italic">breathe</text>'
+            '<text x="300" y="370" font-family="Georgia,serif" font-size="11" fill="rgba(245,235,220,0.2)" font-style="italic">aware</text>'
+            '<text x="80" y="460" font-family="Georgia,serif" font-size="10" fill="rgba(245,235,220,0.14)" font-style="italic">grounded</text>'
+            '<text x="270" y="490" font-family="Georgia,serif" font-size="10" fill="rgba(245,235,220,0.15)" font-style="italic">still</text>'
+            '<text x="130" y="58" font-family="Georgia,serif" font-size="10" fill="rgba(245,235,220,0.13)" font-style="italic">reflect</text>'
+            '<text x="320" y="240" font-family="Georgia,serif" font-size="9" fill="rgba(245,235,220,0.12)" font-style="italic">ease</text>'
             '</svg>'
+            # Brand name
+            '<div style="font-family:\'Playfair Display\',Georgia,serif;font-size:1.6rem;'
+            'font-weight:700;color:rgba(245,235,220,0.95);text-align:center;'
+            'position:relative;z-index:2;letter-spacing:-0.01em;margin-bottom:0.1rem;">'
+            'StressDetect</div>'
+            '<div style="font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;'
+            'color:rgba(193,122,71,0.75);text-align:center;position:relative;z-index:2;'
+            'margin-bottom:1.4rem;">A quiet check-in</div>'
+            # Quote
+            '<div class="rp-quote">'
+            '\u201cYou cannot always control what goes on outside,<br>'
+            'but you can always control what goes on inside.\u201d'
             '</div>'
-            '<div class="hero-title">StressDetect</div>'
-            '<div class="hero-sub">A quiet space to check in with yourself.</div>'
+            '<div class="rp-divider"></div>'
+            '<div class="rp-author">Wayne Dyer</div>'
+            # Feature list
+            '<div style="margin-top:1.6rem;width:100%;position:relative;z-index:2;">'
+            '<div class="rp-feature"><div class="rp-dot"></div>'
+            '<div class="rp-feat-text">Adaptive threshold — stress detection personalised to you</div></div>'
+            '<div class="rp-feature"><div class="rp-dot"></div>'
+            '<div class="rp-feat-text">Science-backed interventions, not generic advice</div></div>'
+            '<div class="rp-feature"><div class="rp-dot"></div>'
+            '<div class="rp-feat-text">History encrypted and always preserved on sign-in</div></div>'
+            '</div>'
             '</div>',
             unsafe_allow_html=True,
         )
+
+    # ── Left panel: forms ──
+    with col_form:
+        st.markdown(
+            '<div style="padding: 1rem 0.5rem;">'
+            '<div style="font-family:\'Playfair Display\',Georgia,serif;font-size:1.55rem;'
+            f'font-weight:700;color:{TEXT_MAIN};margin-bottom:0.15rem;">Welcome back</div>'
+            f'<div style="font-size:0.82rem;color:{TEXT_MUTED};margin-bottom:1.8rem;'
+            'font-weight:300;letter-spacing:0.01em;">Sign in to continue your journey.</div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+
         tab_login, tab_register = st.tabs(["Sign in", "Create account"])
 
         with tab_login:
@@ -1052,7 +1272,7 @@ def _auth_page() -> None:
                 username = st.text_input("Username")
                 password = st.text_input("Password", type="password")
                 submitted = st.form_submit_button(
-                    "Sign in", type="primary", use_container_width=True
+                    "Sign in \u2192", type="primary", use_container_width=True
                 )
                 if submitted and username and password:
                     with st.spinner("Signing in\u2026"):
@@ -1065,17 +1285,22 @@ def _auth_page() -> None:
                         st.session_state.username = username
                         st.session_state.history  = _fetch_history(token)
                         st.session_state.page     = "Dashboard"
-                        st.query_params["t"] = token
                         st.rerun()
                     else:
                         st.error(result["data"].get("detail", "Could not sign in."))
+            st.markdown(
+                f'<p style="font-size:0.75rem;color:{TEXT_MUTED};margin-top:0.6rem;'
+                'line-height:1.6;">Your session stays active for 7 days. '
+                'History is always preserved.</p>',
+                unsafe_allow_html=True,
+            )
 
         with tab_register:
             with st.form("register_form"):
-                new_user = st.text_input("Choose a username  (3\u201350 chars)")
-                new_pass = st.text_input("Choose a password  (8+ chars)", type="password")
+                new_user = st.text_input("Username", placeholder="3\u201350 characters")
+                new_pass = st.text_input("Password", type="password", placeholder="8+ characters")
                 submitted = st.form_submit_button(
-                    "Create account", type="primary", use_container_width=True
+                    "Create account \u2192", type="primary", use_container_width=True
                 )
                 if submitted and new_user and new_pass:
                     with st.spinner("Creating account\u2026"):
@@ -1091,6 +1316,12 @@ def _auth_page() -> None:
                         st.rerun()
                     else:
                         st.error(result["data"].get("detail", "Could not create account."))
+            st.markdown(
+                f'<p style="font-size:0.75rem;color:{TEXT_MUTED};margin-top:0.6rem;'
+                'line-height:1.6;">Your check-in history is encrypted and '
+                'tied to your account.</p>',
+                unsafe_allow_html=True,
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -1163,6 +1394,31 @@ def _dashboard_page() -> None:
         )
 
     st.markdown("")
+
+    # ── Welcome card (first visit / empty state) ──
+    if not history:
+        _AFFIRMATIONS = [
+            "You are allowed to take up space and take care of yourself.",
+            "Even a small check-in is an act of self-awareness.",
+            "Rest is productive. Noticing is the first step.",
+            "You don't have to have it all figured out right now.",
+            "Being honest with yourself takes courage.",
+        ]
+        seed = int(time.time() // 300) % len(_AFFIRMATIONS)
+        st.markdown(
+            f'<div class="welcome-card">'
+            f'<div class="welcome-title">Good to have you here</div>'
+            f'<p class="welcome-sub">'
+            f'Write a few sentences about how you\'re feeling — work, sleep, '
+            f'relationships, anything on your mind. The model will analyse your '
+            f'stress level and suggest what might help.'
+            f'</p>'
+            f'<p style="font-family:Georgia,serif;font-style:italic;'
+            f'font-size:0.85rem;color:{TEXT_MUTED};margin-top:0.9rem;line-height:1.7;">'
+            f'\u201c{_AFFIRMATIONS[seed]}\u201d</p>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
     # Follow-up prompt: if a follow-up timer has elapsed, show reminder
     if "follow_up_time" in st.session_state:
@@ -1411,11 +1667,21 @@ def _dashboard_page() -> None:
 def _history_page() -> None:
     history = st.session_state.get("history", [])
     if not history:
-        st.info("No check-ins yet. Head to the Dashboard to make your first one.")
+        st.markdown(
+            f'<div class="welcome-card" style="text-align:left;">'
+            f'<div class="welcome-title">No check-ins yet</div>'
+            f'<p class="welcome-sub" style="text-align:left;">'
+            f'Head to the Dashboard and make your first check-in. '
+            f'Your stress timeline, patterns, and calendar will appear here '
+            f'as you build a history.'
+            f'</p></div>',
+            unsafe_allow_html=True,
+        )
         return
 
     stats  = _compute_stats(history)
     scores = [h["score"] for h in history]
+    n      = len(history)
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
@@ -1446,6 +1712,33 @@ def _history_page() -> None:
         )
 
     st.markdown("")
+
+    # ── Unlock progress nudges (shown until thresholds met) ──
+    _UNLOCKS = [
+        (3,  "Calendar view",     "3 check-ins to unlock the stress calendar"),
+        (7,  "Pattern analysis",  "7 check-ins to unlock time-of-day patterns"),
+        (10, "Confidence chart",  "10 check-ins to unlock prediction confidence"),
+    ]
+    unlock_html = ""
+    for threshold, label, hint in _UNLOCKS:
+        if n < threshold:
+            pct = int((n / threshold) * 100)
+            unlock_html += (
+                f'<div class="unlock-card">'
+                f'<div style="display:flex;justify-content:space-between;align-items:center;">'
+                f'<span style="font-size:0.82rem;font-weight:500;color:{TEXT_MAIN};">{label}</span>'
+                f'<span class="unlock-label">{n}/{threshold} check-ins</span>'
+                f'</div>'
+                f'<div class="unlock-bar-track">'
+                f'<div class="unlock-bar-fill" style="width:{pct}%;"></div>'
+                f'</div>'
+                f'<div class="unlock-label">{hint}</div>'
+                f'</div>'
+            )
+    if unlock_html:
+        left_u, right_u = st.columns([1, 1])
+        with left_u:
+            st.markdown(unlock_html, unsafe_allow_html=True)
 
     tab_time, tab_dist, tab_cal, tab_patterns, tab_conf = st.tabs([
         "Timeline", "Distribution", "Calendar", "Patterns", "Confidence"
@@ -1575,7 +1868,6 @@ def _settings_page() -> None:
 
     st.markdown("")
     if st.button("Sign out", type="secondary"):
-        st.query_params.clear()
         for key in [
             "token", "username", "history", "current_analysis",
             "_fb_message", "_fb_status", "feedback_done", "page",
@@ -1592,13 +1884,19 @@ def _settings_page() -> None:
 def _sidebar() -> str:
     with st.sidebar:
         st.markdown(
-            f'<div style="font-family: Playfair Display, serif; font-size:1.3rem; font-weight:700; '
-            f'color:{TEXT_MAIN}; padding:0.5rem 0 0.2rem;">StressDetect</div>',
+            f'<div style="font-family:\'Playfair Display\',Georgia,serif;'
+            f'font-size:1.2rem;font-weight:700;color:{TEXT_MAIN};'
+            "padding:0.6rem 0 0.15rem;letter-spacing:-0.01em;"
+            ">StressDetect</div>"
+            f'<div style="font-size:0.7rem;color:{TEXT_MUTED};'
+            "letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem;"
+            ">A quiet check-in</div>",
             unsafe_allow_html=True,
         )
         st.markdown(
-            f'<div style="font-size:0.78rem; color:{TEXT_MUTED}; margin-bottom:1rem;">'
-            f'Signed in as <strong>{st.session_state.get("username", "")}</strong>'
+            f'<div style="font-size:0.8rem;color:{TEXT_MUTED};margin-bottom:1rem;">'
+            f'Signed in as <strong style="color:{TEXT_MAIN};">'
+            f'{st.session_state.get("username", "")}</strong>'
             "</div>",
             unsafe_allow_html=True,
         )
@@ -1659,48 +1957,17 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
     st.markdown(_CSS, unsafe_allow_html=True)
-    def _maybe_refresh_token() -> None:
-        token = st.session_state.get("token")
-        if not token:
-            return
-        try:
-            from security.auth import decode_jwt_token
-            payload = decode_jwt_token(token)
-            exp = payload.get("exp", 0)
-            # Refresh if less than 1 day left
-            if exp - time.time() < 86400:
-                result = _api_post("/token/refresh", {}, token=token)
-                if result["status"] == 200:
-                    new_token = result["data"]["access_token"]
-                    st.session_state.token = new_token
-                    st.query_params["t"] = new_token
-        except Exception:
-            pass
-    if "token" not in st.session_state or not st.session_state.get("token"):
-        saved_token = st.query_params.get("t")
-        if saved_token:
-            # Validate it's still good by calling /history
-            result = _api_get("/history?limit=1", token=saved_token)
-            if result["status"] == 200:
-                # Decode username from JWT payload
-                from security.auth import decode_jwt_token
-                try:
-                    payload = decode_jwt_token(saved_token)
-                    st.session_state.token = saved_token
-                    st.session_state.username = payload.get("sub", "")
-                    st.session_state.history = _fetch_history(saved_token)
-                    st.session_state.page = "Dashboard"
-                except Exception:
-                    st.query_params.clear()
 
     if "token" not in st.session_state or not st.session_state.token:
         _auth_page()
         return
 
+    page = _sidebar()
+
     if page == "Dashboard":
         st.markdown('<p class="page-title">Dashboard</p>', unsafe_allow_html=True)
         st.markdown(
-            '<p class="page-subtitle">Check in with yourself, any time.</p>',
+            f'<p class="page-subtitle">Check in with yourself, any time.</p>',
             unsafe_allow_html=True,
         )
         _dashboard_page()
@@ -1726,4 +1993,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    main()                                                                                          
