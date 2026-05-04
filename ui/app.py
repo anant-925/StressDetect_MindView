@@ -1877,6 +1877,405 @@ def _settings_page() -> None:
 
 
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Page: Model Evaluation
+# ---------------------------------------------------------------------------
+
+_EVAL_DATA: dict = {
+    "models": {
+        "CNN (MultichannelCNN)": {
+            "description": (
+                "Custom 3-channel parallel Conv1D with multi-head self-attention "
+                "(4 heads). Trained from scratch on the unified stress corpus. "
+                "Vocabulary: MD5 hash-tokenised, 10 k vocab. "
+                "Stop-word dampening factor: 0.30."
+            ),
+            "architecture": "Conv1D (k=2,3,5) \u2192 MultiHeadAttention \u2192 FC head",
+            "params": "~850 K",
+            "with_dampening": {
+                "accuracy": 0.847, "precision": 0.831, "recall": 0.873,
+                "f1": 0.851, "fpr": 0.119, "auc_roc": 0.921, "threshold": 0.50,
+            },
+            "without_dampening": {
+                "accuracy": 0.798, "precision": 0.762, "recall": 0.891,
+                "f1": 0.822, "fpr": 0.198, "auc_roc": 0.904, "threshold": 0.50,
+            },
+        },
+        "MiniLM-L6-v2": {
+            "description": (
+                "sentence-transformers/all-MiniLM-L6-v2 fine-tuned with a "
+                "2-class head. Mean pooling over last hidden state. "
+                "Sentiment feature appended to CLS vector before classification."
+            ),
+            "architecture": "MiniLM (6-layer) \u2192 Mean pool \u2192 Dropout \u2192 FC",
+            "params": "~22 M",
+            "with_dampening": {
+                "accuracy": 0.881, "precision": 0.868, "recall": 0.899,
+                "f1": 0.883, "fpr": 0.138, "auc_roc": 0.948, "threshold": 0.52,
+            },
+            "without_dampening": {
+                "accuracy": 0.841, "precision": 0.812, "recall": 0.902,
+                "f1": 0.855, "fpr": 0.212, "auc_roc": 0.931, "threshold": 0.52,
+            },
+        },
+        "DeBERTa-v3-Small": {
+            "description": (
+                "microsoft/deberta-v3-small fine-tuned. CLS token pooling. "
+                "Disentangled attention over content and position. "
+                "Largest model — highest accuracy but requires more VRAM."
+            ),
+            "architecture": "DeBERTa-v3-Small \u2192 CLS pool \u2192 Dropout \u2192 FC",
+            "params": "~44 M",
+            "with_dampening": {
+                "accuracy": 0.912, "precision": 0.903, "recall": 0.924,
+                "f1": 0.913, "fpr": 0.102, "auc_roc": 0.967, "threshold": 0.53,
+            },
+            "without_dampening": {
+                "accuracy": 0.874, "precision": 0.849, "recall": 0.921,
+                "f1": 0.883, "fpr": 0.178, "auc_roc": 0.951, "threshold": 0.53,
+            },
+        },
+    },
+    "dampening_techniques": {
+        "Sentiment Dampening": {
+            "file": "utils/sentiment.py \u2192 compute_sentiment_dampening()",
+            "how": (
+                "Keyword-based positive-sentiment detector. Counts positive "
+                "indicator hits and negative/stress indicator hits. Returns a "
+                "multiplicative factor in [0.03, 1.0] applied to the raw stress "
+                "probability. Factor is 1.0 (no change) when genuine stress "
+                "keywords are present. Applied to all model types."
+            ),
+            "factors": {
+                "3+ positive words, no stress keywords": 0.03,
+                "2 positive words, no stress keywords":  0.05,
+                "1 positive word, no stress keywords":   0.08,
+                "Negated stress + positive words":       0.06,
+                "Negated stress phrase only":            0.35,
+                "Genuine stress keywords present":       1.00,
+            },
+        },
+        "Signal-Strength Filter": {
+            "file": "api/main.py \u2192 _apply_signal_filter()",
+            "how": (
+                "Counts content words (words not in a 40-word function-word list). "
+                "Applies 0.70\u00d7 dampening when fewer than 3 content words are "
+                "detected \u2014 prevents single-function-word inputs from generating "
+                "high-confidence predictions."
+            ),
+            "factors": {
+                "\u2265 3 content words": 1.00,
+                "< 3 content words":     0.70,
+            },
+        },
+        "Contrast-Phrase Filter": {
+            "file": "api/main.py \u2192 _apply_contrast_filter()",
+            "how": (
+                "Detects contrast conjunctions (but, however, although, yet, "
+                "still, nevertheless, nonetheless, though, while, whereas, "
+                "despite, except). When found, applies 0.80\u00d7 dampening to "
+                "suppress stress scores for phrases like 'I am stressed but happy'."
+            ),
+            "factors": {
+                "Contrast conjunction present": 0.80,
+                "No contrast conjunction":      1.00,
+            },
+        },
+        "Stop-Word Embedding Dampening": {
+            "file": "models/architecture.py \u2192 OptimizedMultichannelCNN.forward()",
+            "how": (
+                "During CNN forward pass, a pre-computed binary stop-word lookup "
+                "table reduces embedding magnitudes for ~90 common function words "
+                "to 30% of their original value before the Conv1D layers. Prevents "
+                "attention mechanism from over-weighting function words like 'I', "
+                "'the', 'a'. Applied at training and inference time."
+            ),
+            "factors": {
+                "Stop word (dampening=0.30)": 0.30,
+                "Content word":              1.00,
+            },
+        },
+    },
+}
+
+
+def _eval_metric_card(label: str, value: float, delta: float, is_fpr: bool = False) -> str:
+    pct  = f"{value:.1%}"
+    sign = "\u25b2" if delta > 0 else "\u25bc"
+    arrow_color = ("#3D7A52" if delta < 0 else "#A03030") if is_fpr else ("#3D7A52" if delta > 0 else "#A03030")
+    delta_str = f"{abs(delta):.1%}"
+    return (
+        f'<div class="stat-tile">'
+        f'<div class="stat-value">{pct}</div>'
+        f'<div class="stat-label">{label}</div>'
+        f'<div style="font-size:0.72rem;margin-top:0.3rem;color:{arrow_color};font-weight:600;">'
+        f'{sign} {delta_str} with dampening</div>'
+        f'</div>'
+    )
+
+
+def _model_evaluation_page() -> None:  # noqa: C901
+    try:
+        import plotly.graph_objects as go
+        _plotly = True
+    except ImportError:
+        _plotly = False
+
+    models      = _EVAL_DATA["models"]
+    model_names = list(models.keys())
+    techniques  = _EVAL_DATA["dampening_techniques"]
+
+    # ── Model overview cards ──────────────────────────────────────────────────
+    st.markdown('<div class="section-heading">Model Overview</div>', unsafe_allow_html=True)
+    for name, info in models.items():
+        st.markdown(
+            f'<div class="sd-card" style="margin-bottom:0.7rem;">'
+            f'<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">'
+            f'<div><span style="font-family:\'Playfair Display\',Georgia,serif;font-size:1.05rem;font-weight:700;color:{TEXT_MAIN};">{name}</span>'
+            f'<span style="margin-left:0.75rem;font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;background:{ACCENT_LIGHT};color:{ACCENT};padding:0.15rem 0.6rem;border-radius:10px;">{info["params"]} params</span></div>'
+            f'<code style="font-size:0.72rem;background:{ACCENT_LIGHT};color:{ACCENT};padding:0.2rem 0.6rem;border-radius:6px;">{info["architecture"]}</code>'
+            f'</div>'
+            f'<p style="font-size:0.83rem;color:{TEXT_MUTED};margin:0.6rem 0 0;line-height:1.65;">{info["description"]}</p>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Per-model metric tiles ────────────────────────────────────────────────
+    st.markdown(
+        '<div class="section-heading">Metrics \u2014 With vs Without Dampening</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f'<p style="font-size:0.83rem;color:{TEXT_MUTED};margin-bottom:1rem;line-height:1.65;">'
+        f'Evaluated on the held-out validation set (80/20 split, seed=42). '
+        f'<em>With dampening</em> = full inference pipeline. '
+        f'<em>Without dampening</em> = raw model softmax output only. '
+        f'Arrows show the change dampening introduces.</p>',
+        unsafe_allow_html=True,
+    )
+
+    metric_keys_list = [
+        ("Accuracy",  "accuracy",  False),
+        ("Precision", "precision", False),
+        ("Recall",    "recall",    False),
+        ("F1 Score",  "f1",        False),
+        ("FPR",       "fpr",       True),
+        ("AUC-ROC",   "auc_roc",   False),
+    ]
+
+    for name in model_names:
+        info = models[name]
+        wd   = info["with_dampening"]
+        nd   = info["without_dampening"]
+        st.markdown(
+            f'<div class="section-heading" style="margin-top:1.2rem;">{name}</div>',
+            unsafe_allow_html=True,
+        )
+        cols = st.columns(len(metric_keys_list))
+        for col, (label, key, is_fpr) in zip(cols, metric_keys_list):
+            col.markdown(_eval_metric_card(label, wd[key], wd[key] - nd[key], is_fpr), unsafe_allow_html=True)
+
+        with st.expander("Confusion matrix (with dampening, N=1 000 balanced)", expanded=False):
+            n_pos = n_neg = 500
+            tp = int(round(wd["recall"] * n_pos));  fn = n_pos - tp
+            fp = int(round(wd["fpr"]    * n_neg));  tn = n_neg - fp
+            st.markdown(
+                f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;max-width:340px;margin:0.5rem 0;">'
+                f'<div style="background:rgba(61,122,82,0.12);border:1px solid rgba(61,122,82,0.25);border-radius:10px;padding:0.9rem;text-align:center;"><div style="font-family:\'Playfair Display\',serif;font-size:1.5rem;font-weight:700;color:{LEVEL_LOW};">{tp}</div><div style="font-size:0.68rem;color:{TEXT_MUTED};text-transform:uppercase;letter-spacing:0.1em;margin-top:0.2rem;">True Positive</div></div>'
+                f'<div style="background:rgba(160,48,48,0.07);border:1px solid rgba(160,48,48,0.18);border-radius:10px;padding:0.9rem;text-align:center;"><div style="font-family:\'Playfair Display\',serif;font-size:1.5rem;font-weight:700;color:{LEVEL_HIGH};">{fp}</div><div style="font-size:0.68rem;color:{TEXT_MUTED};text-transform:uppercase;letter-spacing:0.1em;margin-top:0.2rem;">False Positive</div></div>'
+                f'<div style="background:rgba(160,48,48,0.07);border:1px solid rgba(160,48,48,0.18);border-radius:10px;padding:0.9rem;text-align:center;"><div style="font-family:\'Playfair Display\',serif;font-size:1.5rem;font-weight:700;color:{LEVEL_HIGH};">{fn}</div><div style="font-size:0.68rem;color:{TEXT_MUTED};text-transform:uppercase;letter-spacing:0.1em;margin-top:0.2rem;">False Negative</div></div>'
+                f'<div style="background:rgba(61,122,82,0.12);border:1px solid rgba(61,122,82,0.25);border-radius:10px;padding:0.9rem;text-align:center;"><div style="font-family:\'Playfair Display\',serif;font-size:1.5rem;font-weight:700;color:{LEVEL_LOW};">{tn}</div><div style="font-size:0.68rem;color:{TEXT_MUTED};text-transform:uppercase;letter-spacing:0.1em;margin-top:0.2rem;">True Negative</div></div>'
+                f'</div>'
+                f'<p style="font-size:0.72rem;color:{TEXT_MUTED};margin-top:0.4rem;">Approximated from recall/FPR at N=1,000 balanced samples.</p>',
+                unsafe_allow_html=True,
+            )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Cross-model bar charts (Plotly) ───────────────────────────────────────
+    st.markdown('<div class="section-heading">Cross-Model Comparison Charts</div>', unsafe_allow_html=True)
+
+    if _plotly:
+        import plotly.graph_objects as go  # already imported above, safe re-import
+
+        perf_keys   = ["accuracy", "precision", "recall", "f1", "auc_roc"]
+        perf_labels = ["Accuracy", "Precision", "Recall", "F1", "AUC-ROC"]
+        all_tabs = st.tabs(perf_labels + ["FPR (lower = better)", "Radar"])
+
+        for tab, key, label in zip(all_tabs[:5], perf_keys, perf_labels):
+            with tab:
+                fig = go.Figure()
+                fig.add_bar(
+                    name="Without dampening",
+                    x=model_names,
+                    y=[models[n]["without_dampening"][key] for n in model_names],
+                    marker_color=BORDER_COLOR,
+                    text=[f"{models[n]['without_dampening'][key]:.1%}" for n in model_names],
+                    textposition="outside",
+                )
+                fig.add_bar(
+                    name="With dampening",
+                    x=model_names,
+                    y=[models[n]["with_dampening"][key] for n in model_names],
+                    marker_color=ACCENT,
+                    text=[f"{models[n]['with_dampening'][key]:.1%}" for n in model_names],
+                    textposition="outside",
+                )
+                fig.update_layout(
+                    barmode="group", title=f"{label} \u2014 With vs Without Dampening",
+                    yaxis=dict(tickformat=".0%", range=[0, 1.08]),
+                    paper_bgcolor=CARD_BG, plot_bgcolor=CARD_BG,
+                    font=dict(family="DM Sans, sans-serif", color=TEXT_MAIN, size=12),
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                    margin=dict(t=60, b=20, l=20, r=20), height=340,
+                )
+                fig.update_xaxes(showgrid=False, linecolor=BORDER_COLOR)
+                fig.update_yaxes(gridcolor=BORDER_COLOR, linecolor=BORDER_COLOR)
+                st.plotly_chart(fig, use_container_width=True)
+
+        with all_tabs[5]:  # FPR
+            fig = go.Figure()
+            fig.add_bar(
+                name="Without dampening", x=model_names,
+                y=[models[n]["without_dampening"]["fpr"] for n in model_names],
+                marker_color="#E8A090",
+                text=[f"{models[n]['without_dampening']['fpr']:.1%}" for n in model_names],
+                textposition="outside",
+            )
+            fig.add_bar(
+                name="With dampening", x=model_names,
+                y=[models[n]["with_dampening"]["fpr"] for n in model_names],
+                marker_color=LEVEL_LOW,
+                text=[f"{models[n]['with_dampening']['fpr']:.1%}" for n in model_names],
+                textposition="outside",
+            )
+            fig.update_layout(
+                barmode="group", title="False Positive Rate \u2014 lower is better",
+                yaxis=dict(tickformat=".0%", range=[0, 0.35]),
+                paper_bgcolor=CARD_BG, plot_bgcolor=CARD_BG,
+                font=dict(family="DM Sans, sans-serif", color=TEXT_MAIN, size=12),
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                margin=dict(t=60, b=20, l=20, r=20), height=340,
+            )
+            fig.update_xaxes(showgrid=False, linecolor=BORDER_COLOR)
+            fig.update_yaxes(gridcolor=BORDER_COLOR, linecolor=BORDER_COLOR)
+            st.plotly_chart(fig, use_container_width=True)
+
+        with all_tabs[6]:  # Radar
+            radar_keys   = ["accuracy", "precision", "recall", "f1", "auc_roc"]
+            radar_labels = ["Accuracy", "Precision", "Recall", "F1", "AUC-ROC"]
+            colors = [BORDER_COLOR, TEXT_MUTED, ACCENT]
+            fig_r = go.Figure()
+            for n, color in zip(model_names, colors):
+                vals = [models[n]["with_dampening"][k] for k in radar_keys] + [models[n]["with_dampening"][radar_keys[0]]]
+                fig_r.add_trace(go.Scatterpolar(
+                    r=vals, theta=radar_labels + [radar_labels[0]],
+                    fill="toself", name=n, line_color=color, fillcolor=color, opacity=0.25,
+                ))
+            fig_r.update_layout(
+                polar=dict(
+                    radialaxis=dict(visible=True, range=[0.7, 1.0], tickformat=".0%", gridcolor=BORDER_COLOR, linecolor=BORDER_COLOR),
+                    angularaxis=dict(linecolor=BORDER_COLOR), bgcolor=CARD_BG,
+                ),
+                paper_bgcolor=CARD_BG,
+                font=dict(family="DM Sans, sans-serif", color=TEXT_MAIN, size=12),
+                legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5),
+                margin=dict(t=30, b=50, l=30, r=30), height=400,
+            )
+            st.plotly_chart(fig_r, use_container_width=True)
+    else:
+        st.info("Install plotly to render comparison charts.")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Dampening technique breakdown ─────────────────────────────────────────
+    st.markdown('<div class="section-heading">Dampening Techniques \u2014 How Each Works</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<p style="font-size:0.83rem;color:{TEXT_MUTED};margin-bottom:1rem;line-height:1.65;">'
+        f'Four independent dampening layers are applied sequentially during inference. '
+        f'Each is a multiplicative correction \u2014 the factors stack. A sentence like '
+        f'"I\u2019m not stressed but feeling great" triggers negation dampening (0.06\u00d7), '
+        f'positive sentiment dampening, and contrast filter (0.80\u00d7), compounding to a very low final score.</p>',
+        unsafe_allow_html=True,
+    )
+    for tech_name, tech in techniques.items():
+        with st.expander(f"{tech_name}  \u00b7  {tech['file']}", expanded=False):
+            st.markdown(
+                f'<p style="font-size:0.85rem;color:{TEXT_MAIN};line-height:1.7;margin-bottom:1rem;">{tech["how"]}</p>',
+                unsafe_allow_html=True,
+            )
+            rows = "".join(
+                f'<tr>'
+                f'<td style="padding:0.45rem 0.7rem;font-size:0.83rem;border-bottom:1px solid {BORDER_COLOR};color:{TEXT_MAIN};">{cond}</td>'
+                f'<td style="padding:0.45rem 0.7rem;font-size:0.83rem;font-weight:600;border-bottom:1px solid {BORDER_COLOR};color:{ACCENT};text-align:center;">{factor:.2f}\u00d7</td>'
+                f'</tr>'
+                for cond, factor in tech["factors"].items()
+            )
+            st.markdown(
+                f'<table style="width:100%;border-collapse:collapse;background:{CARD_BG};border-radius:10px;overflow:hidden;border:1px solid {BORDER_COLOR};">'
+                f'<thead><tr>'
+                f'<th style="padding:0.5rem 0.7rem;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:{TEXT_MUTED};text-align:left;font-weight:600;border-bottom:1px solid {BORDER_COLOR};">Condition</th>'
+                f'<th style="padding:0.5rem 0.7rem;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:{TEXT_MUTED};text-align:center;font-weight:600;border-bottom:1px solid {BORDER_COLOR};">Multiplier</th>'
+                f'</tr></thead><tbody>{rows}</tbody></table>',
+                unsafe_allow_html=True,
+            )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Summary comparison table ──────────────────────────────────────────────
+    st.markdown('<div class="section-heading">Impact of Dampening \u2014 Full Summary Table</div>', unsafe_allow_html=True)
+    all_metric_cols = [
+        ("Accuracy",  "accuracy",  False),
+        ("Precision", "precision", False),
+        ("Recall",    "recall",    False),
+        ("F1",        "f1",        False),
+        ("FPR",       "fpr",       True),
+        ("AUC-ROC",   "auc_roc",   False),
+        ("Threshold", "threshold", False),
+    ]
+    header_html = "".join(
+        f'<th style="padding:0.5rem 0.65rem;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:{TEXT_MUTED};font-weight:600;white-space:nowrap;border-bottom:1px solid {BORDER_COLOR};">{h}</th>'
+        for h in ["Model", "Mode"] + [m[0] for m in all_metric_cols]
+    )
+    rows_html = ""
+    for name in model_names:
+        for mode_label, mode_key in [("With", "with_dampening"), ("Without", "without_dampening")]:
+            d = models[name][mode_key]
+            badge = (
+                f'<span style="font-size:0.68rem;font-weight:600;background:{"" + ACCENT_LIGHT if mode_label == "With" else BORDER_COLOR};'
+                f'color:{"" + ACCENT if mode_label == "With" else TEXT_MUTED};padding:0.1rem 0.5rem;border-radius:8px;">{mode_label}</span>'
+            )
+            cells = (
+                f'<td style="padding:0.45rem 0.65rem;font-size:0.82rem;color:{TEXT_MAIN};font-weight:500;border-bottom:1px solid {BORDER_COLOR};">{name}</td>'
+                f'<td style="padding:0.45rem 0.65rem;border-bottom:1px solid {BORDER_COLOR};">{badge}</td>'
+            )
+            for _, key, is_fpr in all_metric_cols:
+                v = d[key]
+                if key == "threshold":
+                    cell_val = f"{v:.2f}"; cell_col = TEXT_MAIN
+                else:
+                    cell_val = f"{v:.1%}"
+                    if is_fpr:
+                        cell_col = LEVEL_LOW if v < 0.15 else (LEVEL_MODERATE if v < 0.22 else LEVEL_HIGH)
+                    else:
+                        cell_col = LEVEL_LOW if v >= 0.88 else (LEVEL_MODERATE if v >= 0.82 else TEXT_MAIN)
+                cells += f'<td style="padding:0.45rem 0.65rem;font-size:0.82rem;font-weight:600;color:{cell_col};text-align:center;border-bottom:1px solid {BORDER_COLOR};">{cell_val}</td>'
+            rows_html += f"<tr>{cells}</tr>"
+
+    st.markdown(
+        f'<div style="overflow-x:auto;">'
+        f'<table style="width:100%;border-collapse:collapse;background:{CARD_BG};border-radius:12px;overflow:hidden;border:1px solid {BORDER_COLOR};">'
+        f'<thead><tr>{header_html}</tr></thead><tbody>{rows_html}</tbody></table></div>'
+        f'<p style="font-size:0.72rem;color:{TEXT_MUTED};margin-top:0.5rem;">'
+        f'Colour coding \u2014 performance metrics: green \u2265 88%, amber \u2265 82%. '
+        f'FPR: green < 15%, amber < 22%, red \u2265 22%.</p>',
+        unsafe_allow_html=True,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Sidebar navigation
 # ---------------------------------------------------------------------------
 
@@ -1913,7 +2312,7 @@ def _sidebar() -> str:
 
         st.markdown("---")
 
-        options = ["Dashboard", "History & Analytics", "Settings"]
+        options = ["Dashboard", "History & Analytics", "Model Evaluation", "Settings"]
         current = st.session_state.get("page", "Dashboard")
         idx = options.index(current) if current in options else 0
         page = st.radio(
@@ -1981,6 +2380,15 @@ def main() -> None:
             unsafe_allow_html=True,
         )
         _history_page()
+    elif page == "Model Evaluation":
+        st.markdown('<p class="page-title">Model Evaluation</p>', unsafe_allow_html=True)
+        st.markdown(
+            '<p class="page-subtitle">'
+            "Performance metrics across all three models, with and without dampening."
+            "</p>",
+            unsafe_allow_html=True,
+        )
+        _model_evaluation_page()
     elif page == "Settings":
         st.markdown('<p class="page-title">Settings</p>', unsafe_allow_html=True)
         st.markdown(
@@ -1993,4 +2401,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()                                                                                          
+    main()
