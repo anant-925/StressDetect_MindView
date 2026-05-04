@@ -58,7 +58,7 @@ from utils.llm_reward import get_llm_reward
 from utils.reward import compute_combined_reward
 from utils.sentiment import compute_sentiment_dampening, get_sentiment_score
 from utils.text_preprocessing import clean_text
-
+from datetime import timedelta 
 # ---------------------------------------------------------------------------
 # App & global state
 # ---------------------------------------------------------------------------
@@ -592,33 +592,53 @@ def model_info() -> dict:
     }
 
 
-@app.post("/register", response_model=TokenResponse, status_code=201)
-def register(req: RegisterRequest) -> TokenResponse:
-    """Register a new user with bcrypt-hashed password."""
-    if _db.user_exists(req.username):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already exists",
-        )
-
-    _db.create_user(req.username, hash_password(req.password))
-
-    token = create_jwt_token({"sub": req.username})
-    return TokenResponse(access_token=token)
-
-
 @app.post("/login", response_model=TokenResponse)
 def login(req: LoginRequest) -> TokenResponse:
     """Verify credentials and return a JWT token."""
-    user = _db.get_user(req.username)
-    if user is None or not verify_password(req.password, user["password_hash"]):
+    username_normalized = req.username.strip().lower()
+    logger.info("Login attempt for username: %s", username_normalized)
+
+    user = _db.get_user(username_normalized)
+    if user is None:
+        logger.warning("Login failed: user '%s' not found in database.", username_normalized)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+        )
+
+    password_match = verify_password(req.password, user["password_hash"])
+    logger.info("Password match result for '%s': %s", username_normalized, password_match)
+
+    if not password_match:
+        logger.warning("Login failed: wrong password for user '%s'.", username_normalized)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
         )
 
     expiry = timedelta(days=7) if req.remember_me else timedelta(hours=1)
-    token = create_jwt_token({"sub": req.username}, expires_delta=expiry)
+    token = create_jwt_token({"sub": username_normalized}, expires_delta=expiry)
+    logger.info("Token generated successfully for user '%s'.", username_normalized)
+
+    return TokenResponse(access_token=token)
+
+
+@app.post("/register", response_model=TokenResponse, status_code=201)
+def register(req: RegisterRequest) -> TokenResponse:
+    """Register a new user with bcrypt-hashed password."""
+    username_normalized = req.username.strip().lower()
+
+    if _db.user_exists(username_normalized):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already exists",
+        )
+
+    hashed = hash_password(req.password)
+    logger.info("Registering user '%s' with hashed password.", username_normalized)
+    _db.create_user(username_normalized, hashed)
+
+    token = create_jwt_token({"sub": username_normalized})
     return TokenResponse(access_token=token)
 
 @app.post("/token/refresh", response_model=TokenResponse)

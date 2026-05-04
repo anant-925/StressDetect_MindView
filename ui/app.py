@@ -578,13 +578,19 @@ def _render_crisis_notice(message: str) -> None:
     st.markdown(
         f'<div class="crisis-notice">'
         f"<strong>We hear you.</strong><br>{safe_msg}<br><br>"
-        f"<strong>108 Suicide &amp; Crisis Lifeline</strong> — call or text "
-        f"<strong>108<strong><br>"
-        f"<strong>Crisis Text Line</strong> — text HOME to <strong>741741</strong>"
+        f"⚠️ We noticed language that suggests you may be in crisis. "
+        f"You are not alone. Please reach out to a professional:<br><br>"
+        f"<strong>📞 iCall</strong> — <strong>9152987821</strong> "
+        f"(Mon–Sat, 8 AM–10 PM)<br>"
+        f"<strong>📞 Vandrevala Foundation</strong> — <strong>1860-2662-345</strong> "
+        f"(24/7)<br>"
+        f"<strong>📞 AASRA</strong> — <strong>9820466627</strong> (24/7)<br>"
+        f"<strong>📞 Snehi</strong> — <strong>044-24640050</strong><br>"
+        f"<strong>🌐 iCall (email):</strong> "
+        f'<a href="mailto:icall@tiss.edu">icall@tiss.edu</a>'
         f"</div>",
         unsafe_allow_html=True,
     )
-
 
 def _render_escalation_banner() -> None:
     st.markdown(
@@ -592,10 +598,10 @@ def _render_escalation_banner() -> None:
         "<strong>🔔 Your stress has been persistently elevated.</strong><br>"
         "You've had several high-stress check-ins in a row. Speaking with a "
         "professional counsellor can make a real difference — you deserve support.<br>"
-        "<strong>📞 SAMHSA:</strong> 1-800-662-4357 &nbsp;|&nbsp; "
+        "<strong>📞 iCall:</strong> 9152987821 &nbsp;|&nbsp; "
+        "<strong>📞 Vandrevala Foundation:</strong> 1860-2662-345 &nbsp;|&nbsp; "
         '<strong>🌐 Find a therapist:</strong> '
-        '<a href="https://www.psychologytoday.com/us/therapists" target="_blank">'
-        "psychologytoday.com</a>"
+        '<a href="https://www.therapize.in" target="_blank">therapize.in</a>'
         "</div>",
         unsafe_allow_html=True,
     )
@@ -610,7 +616,7 @@ def _render_wellbeing_action_bar() -> None:
         '<div class="action-bar">'
         '<a class="action-btn" href="https://open.spotify.com/playlist/37i9dQZF1DWXe9gFZP0gtP" target="_blank">🎵 Calming music</a>'
         '<a class="action-btn" href="https://www.youtube.com/results?search_query=5+minute+guided+meditation" target="_blank">🧘 Guided meditation</a>'
-        '<a class="action-btn" href="tel:108">📞 Call 108 (crisis line)</a>'
+        '<a class="action-btn" href="tel:9152987821">📞 Call iCall (9152987821)</a>'
         "</div>",
         unsafe_allow_html=True,
     )
@@ -1285,6 +1291,7 @@ def _auth_page() -> None:
                         st.session_state.username = username
                         st.session_state.history  = _fetch_history(token)
                         st.session_state.page     = "Dashboard"
+                        st.query_params["t"] = token 
                         st.rerun()
                     else:
                         st.error(result["data"].get("detail", "Could not sign in."))
@@ -1313,6 +1320,7 @@ def _auth_page() -> None:
                         st.session_state.username = new_user
                         st.session_state.history  = []
                         st.session_state.page     = "Dashboard"
+                        st.query_params["t"] = token
                         st.rerun()
                     else:
                         st.error(result["data"].get("detail", "Could not create account."))
