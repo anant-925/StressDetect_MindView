@@ -1868,6 +1868,9 @@ def _settings_page() -> None:
 
     st.markdown("")
     if st.button("Sign out", type="secondary"):
+        # Clear the token from the URL first so a page refresh after
+        # sign-out does not immediately restore the old session.
+        st.query_params.clear()
         for key in [
             "token", "username", "history", "current_analysis",
             "_fb_message", "_fb_status", "feedback_done", "page",
@@ -2356,6 +2359,37 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
     st.markdown(_CSS, unsafe_allow_html=True)
+
+    # ── Session restore: recover token from URL query param on page reload ──
+    # When the user refreshes the tab st.session_state is wiped, but the URL
+    # still carries ?t=<token> (written at login time below).  We validate it
+    # against /history (a cheap authenticated call) and rebuild the session.
+    if "token" not in st.session_state or not st.session_state.get("token"):
+        saved_token = st.query_params.get("t", "")
+        if saved_token:
+            probe = _api_get("/history?limit=1", token=saved_token)
+            if probe.get("status") == 200:
+                # Decode the username from the JWT payload without a full
+                # import of the security module (split on '.' and decode).
+                try:
+                    import base64, json as _json
+                    payload_b64 = saved_token.split(".")[1]
+                    # Add padding so base64 doesn't error on short payloads
+                    payload_b64 += "=" * (4 - len(payload_b64) % 4)
+                    payload = _json.loads(base64.urlsafe_b64decode(payload_b64))
+                    restored_username = payload.get("sub", "")
+                except Exception:
+                    restored_username = ""
+
+                if restored_username:
+                    st.session_state.token    = saved_token
+                    st.session_state.username = restored_username
+                    st.session_state.history  = _fetch_history(saved_token)
+                    st.session_state.page     = st.session_state.get("page", "Dashboard")
+            else:
+                # Token is expired or invalid — remove it from the URL so
+                # the user lands on a clean auth page.
+                st.query_params.clear()
 
     if "token" not in st.session_state or not st.session_state.token:
         _auth_page()
