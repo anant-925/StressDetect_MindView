@@ -1,4 +1,3 @@
-cat > .gitignore << 'EOF'
 # Virtual environment
 venv/
 .venv/
@@ -53,8 +52,10 @@ logs/
 *.db
 *.sqlite
 *.sqlite3
+*.db-shm
+*.db-wal
 
 # Secrets
 .env
 *.env
-EOF
+.fernet_key

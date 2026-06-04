@@ -175,7 +175,7 @@ def retrain(
     torch.manual_seed(seed)
 
     if output_path == checkpoint_path:
-        output_dir = "/data/checkpoints"
+        output_dir = os.path.join(ROOT_DIR, "data", "checkpoints")
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, f"model_{int(time.time())}.pt")
 

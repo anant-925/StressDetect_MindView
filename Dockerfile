@@ -27,7 +27,7 @@ COPY . .
 RUN python scripts/download_model.py
 
 # ── Permissions (IMPORTANT for HF) ───────────────────────────────────────────
-RUN chown -R user:user /app
+RUN mkdir -p /data && chown -R user:user /data && chown -R user:user /app
 
 # Switch to non-root AFTER setup
 USER user
