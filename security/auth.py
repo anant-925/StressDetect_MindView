@@ -43,7 +43,22 @@ JWT_EXPIRATION_MINUTES: int = int(os.environ.get("JWT_EXPIRATION_MINUTES", "1008
 # Fernet key for AES-256 encryption
 _fernet_key: str = os.environ.get("FERNET_KEY", "")
 if not _fernet_key:
-    _fernet_key = Fernet.generate_key().decode()
+    _root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    _key_file = os.path.join(_root_dir, ".fernet_key")
+    if os.path.isfile(_key_file):
+        try:
+            with open(_key_file, "r", encoding="utf-8") as _f:
+                _fernet_key = _f.read().strip()
+        except Exception:
+            pass
+    if not _fernet_key:
+        _fernet_key = Fernet.generate_key().decode()
+        try:
+            with open(_key_file, "w", encoding="utf-8") as _f:
+                _f.write(_fernet_key)
+        except Exception:
+            pass
+
 FERNET_KEY: bytes = (
     _fernet_key.encode() if isinstance(_fernet_key, str) else _fernet_key
 )

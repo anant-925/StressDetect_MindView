@@ -578,13 +578,19 @@ def _render_crisis_notice(message: str) -> None:
     st.markdown(
         f'<div class="crisis-notice">'
         f"<strong>We hear you.</strong><br>{safe_msg}<br><br>"
-        f"<strong>108 Suicide &amp; Crisis Lifeline</strong> — call or text "
-        f"<strong>108<strong><br>"
-        f"<strong>Crisis Text Line</strong> — text HOME to <strong>741741</strong>"
+        f"⚠️ We noticed language that suggests you may be in crisis. "
+        f"You are not alone. Please reach out to a professional:<br><br>"
+        f"<strong>📞 iCall</strong> — <strong>9152987821</strong> "
+        f"(Mon–Sat, 8 AM–10 PM)<br>"
+        f"<strong>📞 Vandrevala Foundation</strong> — <strong>1860-2662-345</strong> "
+        f"(24/7)<br>"
+        f"<strong>📞 AASRA</strong> — <strong>9820466627</strong> (24/7)<br>"
+        f"<strong>📞 Snehi</strong> — <strong>044-24640050</strong><br>"
+        f"<strong>🌐 iCall (email):</strong> "
+        f'<a href="mailto:icall@tiss.edu">icall@tiss.edu</a>'
         f"</div>",
         unsafe_allow_html=True,
     )
-
 
 def _render_escalation_banner() -> None:
     st.markdown(
@@ -592,10 +598,10 @@ def _render_escalation_banner() -> None:
         "<strong>🔔 Your stress has been persistently elevated.</strong><br>"
         "You've had several high-stress check-ins in a row. Speaking with a "
         "professional counsellor can make a real difference — you deserve support.<br>"
-        "<strong>📞 SAMHSA:</strong> 1-800-662-4357 &nbsp;|&nbsp; "
+        "<strong>📞 iCall:</strong> 9152987821 &nbsp;|&nbsp; "
+        "<strong>📞 Vandrevala Foundation:</strong> 1860-2662-345 &nbsp;|&nbsp; "
         '<strong>🌐 Find a therapist:</strong> '
-        '<a href="https://www.psychologytoday.com/us/therapists" target="_blank">'
-        "psychologytoday.com</a>"
+        '<a href="https://www.therapize.in" target="_blank">therapize.in</a>'
         "</div>",
         unsafe_allow_html=True,
     )
@@ -610,7 +616,7 @@ def _render_wellbeing_action_bar() -> None:
         '<div class="action-bar">'
         '<a class="action-btn" href="https://open.spotify.com/playlist/37i9dQZF1DWXe9gFZP0gtP" target="_blank">🎵 Calming music</a>'
         '<a class="action-btn" href="https://www.youtube.com/results?search_query=5+minute+guided+meditation" target="_blank">🧘 Guided meditation</a>'
-        '<a class="action-btn" href="tel:108">📞 Call 108 (crisis line)</a>'
+        '<a class="action-btn" href="tel:9152987821">📞 Call iCall (9152987821)</a>'
         "</div>",
         unsafe_allow_html=True,
     )
@@ -1285,6 +1291,7 @@ def _auth_page() -> None:
                         st.session_state.username = username
                         st.session_state.history  = _fetch_history(token)
                         st.session_state.page     = "Dashboard"
+                        st.query_params["t"] = token 
                         st.rerun()
                     else:
                         st.error(result["data"].get("detail", "Could not sign in."))
@@ -1313,6 +1320,7 @@ def _auth_page() -> None:
                         st.session_state.username = new_user
                         st.session_state.history  = []
                         st.session_state.page     = "Dashboard"
+                        st.query_params["t"] = token
                         st.rerun()
                     else:
                         st.error(result["data"].get("detail", "Could not create account."))
@@ -1868,6 +1876,9 @@ def _settings_page() -> None:
 
     st.markdown("")
     if st.button("Sign out", type="secondary"):
+        # Clear the token from the URL first so a page refresh after
+        # sign-out does not immediately restore the old session.
+        st.query_params.clear()
         for key in [
             "token", "username", "history", "current_analysis",
             "_fb_message", "_fb_status", "feedback_done", "page",
@@ -2356,6 +2367,37 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
     st.markdown(_CSS, unsafe_allow_html=True)
+
+    # ── Session restore: recover token from URL query param on page reload ──
+    # When the user refreshes the tab st.session_state is wiped, but the URL
+    # still carries ?t=<token> (written at login time below).  We validate it
+    # against /history (a cheap authenticated call) and rebuild the session.
+    if "token" not in st.session_state or not st.session_state.get("token"):
+        saved_token = st.query_params.get("t", "")
+        if saved_token:
+            probe = _api_get("/history?limit=1", token=saved_token)
+            if probe.get("status") == 200:
+                # Decode the username from the JWT payload without a full
+                # import of the security module (split on '.' and decode).
+                try:
+                    import base64, json as _json
+                    payload_b64 = saved_token.split(".")[1]
+                    # Add padding so base64 doesn't error on short payloads
+                    payload_b64 += "=" * (4 - len(payload_b64) % 4)
+                    payload = _json.loads(base64.urlsafe_b64decode(payload_b64))
+                    restored_username = payload.get("sub", "")
+                except Exception:
+                    restored_username = ""
+
+                if restored_username:
+                    st.session_state.token    = saved_token
+                    st.session_state.username = restored_username
+                    st.session_state.history  = _fetch_history(saved_token)
+                    st.session_state.page     = st.session_state.get("page", "Dashboard")
+            else:
+                # Token is expired or invalid — remove it from the URL so
+                # the user lands on a clean auth page.
+                st.query_params.clear()
 
     if "token" not in st.session_state or not st.session_state.token:
         _auth_page()

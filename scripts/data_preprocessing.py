@@ -30,6 +30,9 @@ import os
 import sys
 import zipfile
 
+# Allow importing from the repository root
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import pandas as pd
 
 
@@ -539,18 +542,11 @@ def _numeric_features(df: pd.DataFrame, exclude_cols: list[str]) -> pd.DataFrame
 
 
 def clean_text(text: str) -> str:
-    """Strip whitespace and remove high-frequency stop words.
-
-    Preserves contrast and negation words (e.g. 'but', 'not') that carry
-    genuine semantic signal for stress detection.  Returns an empty string
-    for inputs that are ``None``, NaN, or consist entirely of whitespace.
+    """Clean and normalise text using the standard project pipeline
+    to ensure identical preprocessing at train and inference time.
     """
-    if not isinstance(text, str) or not text.strip():
-        return ""
-    words = text.lower().split()
-    filtered = [w for w in words if w not in _PREPROCESSING_STOP_WORDS]
-    # Fall back to the original words if filtering removed everything.
-    return " ".join(filtered) if filtered else text.lower().strip()
+    from utils.text_preprocessing import clean_text as standard_clean_text
+    return standard_clean_text(text)
 
 
 def augment_text(text: str) -> list[str]:
@@ -656,18 +652,19 @@ def merge_datasets(input_dir: str, output_path: str) -> pd.DataFrame:
 
 
 def main() -> None:
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     parser = argparse.ArgumentParser(
         description="Merge stress-detection datasets into a unified CSV."
     )
     parser.add_argument(
         "--input-dir",
-        default=os.path.join(os.path.dirname(__file__), "data", "raw"),
+        default=os.path.join(root_dir, "data", "raw"),
         help="Directory containing the raw dataset files (default: data/raw)",
     )
     parser.add_argument(
         "--output",
         default=os.path.join(
-            os.path.dirname(__file__), "data", "processed", "unified_stress.csv"
+            root_dir, "data", "processed", "unified_stress.csv"
         ),
         help="Output path for the unified CSV (default: data/processed/unified_stress.csv)",
     )

@@ -230,24 +230,36 @@ def get_sentiment_score(text: str) -> float:
     * ``0.5`` → neutral (no clear signal either way).
 
     The score is derived from the same keyword lists used by
-    :func:`compute_sentiment_dampening`.
+    :func:`compute_sentiment_dampening`, and robustly handles negated stress.
     """
     if not text or not text.strip():
         return 0.5
 
     text_lower = text.lower()
 
+    # Replace negated stress phrases with a placeholder
+    processed = text_lower
+    negation_hits = 0
+    for pat in _NEGATED_STRESS_PATTERNS:
+        matches = pat.findall(processed)
+        negation_hits += len(matches)
+        processed = pat.sub("__negated__", processed)
+
+    # Count genuine (non-negated) negative hits on the processed text
     negative_hits = 0
     for pat in _NEGATIVE_PATTERNS:
-        negative_hits += len(pat.findall(text_lower))
+        negative_hits += len(pat.findall(processed))
 
+    # Count positive hits (single words + phrases) on the original text
     positive_hits = 0
     for pat in _POSITIVE_PATTERNS:
         positive_hits += len(pat.findall(text_lower))
     for pat in _POSITIVE_PHRASES:
         positive_hits += len(pat.findall(text_lower))
 
-    total = positive_hits + negative_hits
+    # Negation hits represent positive/neutral sentiment (denial of stress)
+    total_positive = positive_hits + negation_hits
+    total = total_positive + negative_hits
     if total == 0:
         return 0.5
 
